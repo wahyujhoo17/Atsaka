@@ -1,6 +1,6 @@
-import React from 'react';
-import ContactForm from '../components/contact/ContactForm';
-import ContactInfo from '../components/contact/ContactInfo';
+import React from "react";
+import ContactForm from "../components/contact/ContactForm";
+import ContactInfo from "../components/contact/ContactInfo";
 
 const ContactPage: React.FC = () => {
   return (
@@ -12,8 +12,9 @@ const ContactPage: React.FC = () => {
           </h1>
           <div className="w-16 h-1 bg-red-500 mx-auto mb-6"></div>
           <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 text-lg">
-            Punya pertanyaan tentang produk kami atau butuh penawaran? Tim kami siap membantu Anda.
-            Isi formulir di bawah ini atau hubungi kami langsung melalui telepon atau email.
+            Punya pertanyaan tentang produk kami atau butuh penawaran? Tim kami
+            siap membantu Anda. Isi formulir di bawah ini atau hubungi kami
+            langsung melalui telepon atau email.
           </p>
         </div>
 
@@ -28,12 +29,16 @@ const ContactPage: React.FC = () => {
               Lokasi Kami
             </h3>
             <div className="h-96">
-              {/* Ganti dengan peta aktual atau sematkan Google Maps di sini */}
-              <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-                <p className="text-gray-500 dark:text-gray-400 text-center p-6">
-                  Peta akan disematkan di sini menunjukkan lokasi kantor pusat ATSAKA di Jakarta, Indonesia.
-                </p>
-              </div>
+              <iframe
+                src="https://www.google.com/maps?q=Jl.+Raya+Condet+No.6,+RT.2/RW.1,+Balekambang,+Kec.+Kramat+jati,+Kota+Jakarta+Timur,+Daerah+Khusus+Ibukota+Jakarta+13530&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                title="Lokasi ATSAKA"
+                className="w-full h-full"
+              ></iframe>
             </div>
           </div>
         </div>
