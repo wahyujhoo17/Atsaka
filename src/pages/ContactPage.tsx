@@ -1,8 +1,20 @@
 import React from "react";
+import { MessageCircle } from "lucide-react";
 import ContactForm from "../components/contact/ContactForm";
 import ContactInfo from "../components/contact/ContactInfo";
 
 const ContactPage: React.FC = () => {
+  const handleWhatsAppClick = () => {
+    // Nomor WhatsApp perusahaan (ganti dengan nomor yang sesuai)
+    const phoneNumber = "6281234567890"; // Format: 62 (kode negara) + nomor tanpa 0 di depan
+    const message =
+      "Halo, saya tertarik dengan produk ATSAKA. Bisakah Anda memberikan informasi lebih lanjut?";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-16">
       <div className="container mx-auto px-4">
@@ -42,6 +54,24 @@ const ContactPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Floating WhatsApp Button */}
+        <button
+          onClick={handleWhatsAppClick}
+          className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 group"
+          aria-label="Chat via WhatsApp"
+        >
+          <MessageCircle className="w-6 h-6 group-hover:animate-pulse" />
+
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            Chat via WhatsApp
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+
+          {/* Ripple effect */}
+          <div className="absolute inset-0 rounded-full animate-ping bg-green-400 opacity-20"></div>
+        </button>
       </div>
     </div>
   );
