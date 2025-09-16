@@ -5,12 +5,14 @@ interface ProductFilterProps {
   categories: string[];
   selectedCategory: string | null;
   onCategoryChange: (category: string | null) => void;
+  productCounts: Record<string, number>;
 }
 
 const ProductFilter: React.FC<ProductFilterProps> = ({
   categories,
   selectedCategory,
   onCategoryChange,
+  productCounts,
 }) => {
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -35,16 +37,7 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
   };
 
   const getCategoryCount = (category: string) => {
-    // You can implement actual counting logic here if needed
-    // For now, returning placeholder counts
-    switch (category) {
-      case "pump":
-        return 8;
-      case "equipment":
-        return 12;
-      default:
-        return 6;
-    }
+    return productCounts[category] || 0;
   };
 
   return (

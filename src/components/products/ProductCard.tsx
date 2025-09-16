@@ -38,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Link
       to={`/products/${product.slug}`}
-      className="group block bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-600/30 transform hover:-translate-y-1 hover:scale-[1.02] h-full"
+      className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-600/30 transform hover:-translate-y-1 hover:scale-[1.02] flex flex-col"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -76,16 +76,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </div>
 
-      <div className="p-5">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-red-600 transition-colors duration-300 leading-tight min-h-[3.5rem]">
+      <div className="p-5 flex-1 flex flex-col">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 line-clamp-3 group-hover:text-red-600 transition-colors duration-300 leading-tight flex-shrink-0">
           {product.name}
         </h3>
-        <p className="text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed text-sm mb-4 min-h-[2.5rem]">
+        <p className="text-gray-600 dark:text-gray-300 line-clamp-3 leading-relaxed text-sm mb-4 flex-1">
           {product.description}
         </p>
 
         {/* Additional visual element */}
-        <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
               Produk Profesional

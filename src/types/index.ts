@@ -10,6 +10,14 @@ export interface Product {
   specifications: { [key: string]: string };
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+}
+
 export interface GalleryItem {
   id: string;
   title: string;

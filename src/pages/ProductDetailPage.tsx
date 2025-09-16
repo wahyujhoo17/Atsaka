@@ -3,7 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
 import Button from "../components/common/Button";
-import { products } from "../data/products";
+import { supabase } from "../lib/supabase";
+import { Product } from "../types";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -35,19 +36,78 @@ const CustomArrow: React.FC<{
 
 const ProductDetailPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
-  const product = products.find((p) => p.slug === productSlug);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [nav1, setNav1] = useState<Slider | null>(null);
-  const [nav2, setNav2] = useState<Slider | null>(null);
   const slider1Ref = useRef<Slider>(null);
   const slider2Ref = useRef<Slider>(null);
 
   useEffect(() => {
-    setNav1(slider1Ref.current);
-    setNav2(slider2Ref.current);
-  }, []);
+    const fetchProduct = async () => {
+      if (!productSlug) {
+        setError("Product slug is required");
+        setLoading(false);
+        return;
+      }
 
-  if (!product) {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", productSlug)
+          .single();
+
+        if (error) {
+          if (error.code === "PGRST116") {
+            // No rows returned
+            setError("Product not found");
+          } else {
+            throw error;
+          }
+        } else {
+          // Transform data to match Product interface
+          const transformedProduct: Product = {
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            category: data.category,
+            description: data.description || "",
+            features: data.features || [],
+            imageUrl: data.image_url || "",
+            imageUrls: data.image_urls || [],
+            specifications: data.specifications || {},
+          };
+          setProduct(transformedProduct);
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        setError("Failed to load product");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productSlug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            Loading product...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-16 flex items-center justify-center">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 max-w-md w-full text-center">
@@ -65,51 +125,58 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
+  const getImageArray = () => {
+    return product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+  };
+
+  const imageArray = getImageArray();
+
   const mainSliderSettings = {
     slidesToShow: 1,
     slidesToScroll: 1,
     arrows: true,
     fade: true,
-    infinite: true,
+    infinite: imageArray.length > 1,
     speed: 500,
     prevArrow: <CustomArrow icon={ChevronLeft} />,
     nextArrow: <CustomArrow icon={ChevronRight} />,
-    asNavFor: nav2,
+    asNavFor: slider2Ref.current || undefined,
   };
 
   const thumbSliderSettings = {
-    slidesToShow: 5,
+    slidesToShow: Math.min(5, imageArray.length),
     slidesToScroll: 1,
-    asNavFor: nav1,
+    asNavFor: slider1Ref.current || undefined,
     dots: false,
     arrows: false,
     centerMode: false,
     focusOnSelect: true,
-    infinite: product.imageUrls.length > 5,
+    infinite: imageArray.length > 5,
     swipeToSlide: true,
     responsive: [
       {
         breakpoint: 1280,
         settings: {
-          slidesToShow:
-            product.imageUrls.length < 4 ? product.imageUrls.length : 4,
-          infinite: product.imageUrls.length > 4,
+          slidesToShow: Math.min(4, imageArray.length),
+          infinite: imageArray.length > 4,
         },
       },
       {
         breakpoint: 768,
         settings: {
-          slidesToShow:
-            product.imageUrls.length < 4 ? product.imageUrls.length : 4,
-          infinite: product.imageUrls.length > 4,
+          slidesToShow: Math.min(4, imageArray.length),
+          infinite: imageArray.length > 4,
         },
       },
       {
         breakpoint: 640,
         settings: {
-          slidesToShow:
-            product.imageUrls.length < 3 ? product.imageUrls.length : 3,
-          infinite: product.imageUrls.length > 3,
+          slidesToShow: Math.min(3, imageArray.length),
+          infinite: imageArray.length > 3,
         },
       },
     ],
@@ -131,11 +198,17 @@ const ProductDetailPage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
             <div className="lg:col-span-2 p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/50">
-              {product.imageUrls && product.imageUrls.length > 0 ? (
+              {(product.imageUrls && product.imageUrls.length > 0) ||
+              product.imageUrl ? (
                 <>
                   <div className="relative mb-3 product-main-slider">
                     <Slider {...mainSliderSettings} ref={slider1Ref}>
-                      {product.imageUrls.map((url, index) => (
+                      {(product.imageUrls && product.imageUrls.length > 0
+                        ? product.imageUrls
+                        : product.imageUrl
+                        ? [product.imageUrl]
+                        : []
+                      ).map((url, index) => (
                         <div
                           key={`main-${index}`}
                           className="outline-none focus:outline-none"
@@ -152,15 +225,23 @@ const ProductDetailPage: React.FC = () => {
                     </Slider>
                   </div>
 
-                  {product.imageUrls.length > 1 && (
-                    <div className="product-thumb-slider -mx-1">
+                  {((product.imageUrls && product.imageUrls.length > 1) ||
+                    (product.imageUrls &&
+                      product.imageUrls.length === 0 &&
+                      product.imageUrl)) && (
+                    <div className="product-thumb-slider flex justify-center">
                       <Slider {...thumbSliderSettings} ref={slider2Ref}>
-                        {product.imageUrls.map((url, index) => (
+                        {(product.imageUrls && product.imageUrls.length > 0
+                          ? product.imageUrls
+                          : product.imageUrl
+                          ? [product.imageUrl]
+                          : []
+                        ).map((url, index) => (
                           <div
                             key={`thumb-${index}`}
-                            className="px-1 outline-none focus:outline-none"
+                            className="px-0.5 outline-none focus:outline-none"
                           >
-                            <div className="relative aspect-square cursor-pointer rounded overflow-hidden border-2 border-transparent slick-thumb-item group">
+                            <div className="relative w-12 h-12 cursor-pointer rounded overflow-hidden border-2 border-transparent slick-thumb-item group">
                               <LazyImage
                                 src={url}
                                 alt={`Thumbnail ${index + 1}`}
