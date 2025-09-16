@@ -31,22 +31,72 @@ function App() {
 
             {/* Public routes with navbar/footer */}
             <Route
-              path="/*"
+              path="/"
               element={
                 <>
                   <Navbar />
                   <main className="flex-grow">
-                    <Routes>
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/products" element={<ProductsPage />} />
-                      <Route
-                        path="/products/:productSlug"
-                        element={<ProductDetailPage />}
-                      />
-                      <Route path="/about" element={<AboutPage />} />
-                      <Route path="/gallery" element={<GalleryPage />} />
-                      <Route path="/contact" element={<ContactPage />} />
-                    </Routes>
+                    <HomePage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <ProductsPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/products/:productSlug"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <ProductDetailPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <AboutPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/gallery"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <GalleryPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <ContactPage />
                   </main>
                   <Footer />
                 </>
