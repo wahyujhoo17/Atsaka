@@ -16,7 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { Product, Category } from "../types";
+import { Product, Category, GalleryItem } from "../types";
 
 interface ProductFormData {
   name: string;
@@ -34,17 +34,37 @@ interface CategoryFormData {
   imageUrl: string;
 }
 
+interface GalleryFormData {
+  title: string;
+  description: string;
+  type: "photo" | "video";
+  url: string;
+  imageUrl: string;
+  category: string;
+}
+
 const AdminPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"products" | "categories">(
-    "products"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "products" | "categories" | "gallery"
+  >("products");
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showGalleryForm, setShowGalleryForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingGalleryItem, setEditingGalleryItem] =
+    useState<GalleryItem | null>(null);
+  const [galleryImageMode, setGalleryImageMode] = useState<"upload" | "url">(
+    "upload"
+  );
+  const [gallerySelectedFile, setGallerySelectedFile] = useState<File | null>(
+    null
+  );
+  const [galleryImagePreview, setGalleryImagePreview] = useState<string>("");
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     category: "",
@@ -58,6 +78,14 @@ const AdminPage: React.FC = () => {
     name: "",
     description: "",
     imageUrl: "",
+  });
+  const [galleryFormData, setGalleryFormData] = useState<GalleryFormData>({
+    title: "",
+    description: "",
+    type: "photo",
+    url: "",
+    imageUrl: "",
+    category: "",
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -73,6 +101,7 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchGalleryItems();
   }, []);
 
   const fetchProducts = async () => {
@@ -116,6 +145,34 @@ const AdminPage: React.FC = () => {
       setCategories(data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchGalleryItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data from database format to TypeScript interface
+      const transformedGalleryItems = (data || []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description || "",
+        type: item.type,
+        url: item.url || "",
+        imageUrl: item.image_url || "",
+        category: item.category,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }));
+
+      setGalleryItems(transformedGalleryItems);
+    } catch (error) {
+      console.error("Error fetching gallery items:", error);
     }
   };
 
@@ -293,6 +350,193 @@ const AdminPage: React.FC = () => {
       description: "",
       imageUrl: "",
     });
+  };
+
+  // Gallery CRUD functions
+  const handleGallerySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      let imageUrl = galleryFormData.imageUrl;
+
+      // Handle file upload for photos
+      if (
+        galleryFormData.type === "photo" &&
+        galleryImageMode === "upload" &&
+        gallerySelectedFile
+      ) {
+        // Delete old image if editing and switching from URL to upload, or uploading new file
+        if (
+          editingGalleryItem &&
+          editingGalleryItem.imageUrl &&
+          galleryImageMode === "upload"
+        ) {
+          await deleteOldGalleryImage(editingGalleryItem.imageUrl);
+        }
+        imageUrl = await uploadGalleryImage(gallerySelectedFile);
+      }
+
+      // Handle URL mode - if editing and changing URL, check if old image was uploaded
+      if (
+        galleryFormData.type === "photo" &&
+        galleryImageMode === "url" &&
+        editingGalleryItem &&
+        editingGalleryItem.imageUrl &&
+        editingGalleryItem.imageUrl !== galleryFormData.imageUrl
+      ) {
+        // Only delete if the old URL is from our storage (contains our Supabase domain)
+        if (editingGalleryItem.imageUrl.includes("supabase.co")) {
+          await deleteOldGalleryImage(editingGalleryItem.imageUrl);
+        }
+      }
+
+      if (editingGalleryItem) {
+        // Update existing gallery item
+        const { error } = await supabase
+          .from("gallery")
+          .update({
+            title: galleryFormData.title,
+            description: galleryFormData.description,
+            type: galleryFormData.type,
+            url: galleryFormData.type === "video" ? galleryFormData.url : null,
+            image_url: galleryFormData.type === "photo" ? imageUrl : null,
+            category: galleryFormData.category,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingGalleryItem.id);
+
+        if (error) throw error;
+      } else {
+        // Create new gallery item
+        const { error } = await supabase.from("gallery").insert({
+          title: galleryFormData.title,
+          description: galleryFormData.description,
+          type: galleryFormData.type,
+          url: galleryFormData.type === "video" ? galleryFormData.url : null,
+          image_url: galleryFormData.type === "photo" ? imageUrl : null,
+          category: galleryFormData.category,
+        });
+
+        if (error) throw error;
+      }
+
+      setShowGalleryForm(false);
+      setEditingGalleryItem(null);
+      setGallerySelectedFile(null);
+      setGalleryImagePreview("");
+      fetchGalleryItems();
+    } catch (error) {
+      console.error("Error saving gallery item:", error);
+    }
+  };
+
+  const handleEditGalleryItem = (item: GalleryItem) => {
+    setEditingGalleryItem(item);
+    setGalleryFormData({
+      title: item.title,
+      description: item.description || "",
+      type: item.type,
+      url: item.url || "",
+      imageUrl: item.imageUrl || "",
+      category: item.category,
+    });
+    // Set mode based on whether item has imageUrl or not
+    setGalleryImageMode(item.imageUrl ? "url" : "upload");
+    setGallerySelectedFile(null);
+    setGalleryImagePreview(item.imageUrl || "");
+    setShowGalleryForm(true);
+  };
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this gallery item?")) return;
+
+    try {
+      // First get the item data to check for image URL
+      const { data: item, error: fetchError } = await supabase
+        .from("gallery")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete the item from database
+      const { error } = await supabase.from("gallery").delete().eq("id", id);
+
+      if (error) throw error;
+
+      // Delete associated image from storage if it exists and is from our storage
+      if (item.image_url && item.image_url.includes("supabase.co")) {
+        await deleteOldGalleryImage(item.image_url);
+      }
+
+      fetchGalleryItems();
+    } catch (error) {
+      console.error("Error deleting gallery item:", error);
+    }
+  };
+
+  // Gallery image upload functions
+  const handleGalleryFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setGallerySelectedFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setGalleryImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadGalleryImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${fileExt}`;
+    const filePath = `gallery/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("gallery-images")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("gallery-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const deleteOldGalleryImage = async (imageUrl: string) => {
+    if (!imageUrl) return;
+
+    try {
+      // Extract file path from Supabase public URL
+      // URL format: https://[project-id].supabase.co/storage/v1/object/public/gallery-images/gallery/[filename]
+      const urlParts = imageUrl.split(
+        "/storage/v1/object/public/gallery-images/"
+      );
+      if (urlParts.length === 2) {
+        const filePath = urlParts[1];
+
+        const { error } = await supabase.storage
+          .from("gallery-images")
+          .remove([filePath]);
+
+        if (error) {
+          console.warn("Failed to delete old image:", error);
+        } else {
+          console.log("Old image deleted successfully:", filePath);
+        }
+      }
+    } catch (error) {
+      console.warn("Error deleting old image:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -662,6 +906,17 @@ const AdminPage: React.FC = () => {
               <Tag className="h-4 w-4 inline mr-2" />
               Categories
             </button>
+            <button
+              onClick={() => setActiveTab("gallery")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "gallery"
+                  ? "border-red-500 text-red-600 dark:text-red-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              <Upload className="h-4 w-4 inline mr-2" />
+              Gallery
+            </button>
           </nav>
         </div>
       </div>
@@ -713,7 +968,9 @@ const AdminPage: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Category
                       </label>
-                      <select
+                      <input
+                        type="text"
+                        list="product-categories"
                         value={formData.category}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -721,16 +978,17 @@ const AdminPage: React.FC = () => {
                             category: e.target.value,
                           }))
                         }
+                        placeholder="Type or select category"
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
                         required
-                      >
-                        <option value="">Select Category</option>
+                      />
+                      <datalist id="product-categories">
                         {categories.map((category) => (
                           <option key={category.id} value={category.slug}>
                             {category.name}
                           </option>
                         ))}
-                      </select>
+                      </datalist>
                     </div>
                   </div>
 
@@ -1093,7 +1351,7 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
           </>
-        ) : (
+        ) : activeTab === "categories" ? (
           <>
             {/* Categories Actions */}
             <div className="mb-8">
@@ -1256,7 +1514,314 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
           </>
-        )}
+        ) : activeTab === "gallery" ? (
+          <>
+            {/* Gallery Actions */}
+            <div className="mb-8">
+              <button
+                onClick={() => {
+                  setEditingGalleryItem(null);
+                  setGalleryFormData({
+                    title: "",
+                    description: "",
+                    type: "photo",
+                    url: "",
+                    imageUrl: "",
+                    category: "",
+                  });
+                  setGalleryImageMode("upload");
+                  setGallerySelectedFile(null);
+                  setGalleryImagePreview("");
+                  setShowGalleryForm(true);
+                }}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Gallery Item
+              </button>
+            </div>
+
+            {/* Gallery Form */}
+            {showGalleryForm && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
+                <h2 className="text-xl font-semibold mb-4">
+                  {editingGalleryItem
+                    ? "Edit Gallery Item"
+                    : "Add New Gallery Item"}
+                </h2>
+                <form onSubmit={handleGallerySubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={galleryFormData.title}
+                        onChange={(e) =>
+                          setGalleryFormData((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Type
+                      </label>
+                      <select
+                        value={galleryFormData.type}
+                        onChange={(e) =>
+                          setGalleryFormData((prev) => ({
+                            ...prev,
+                            type: e.target.value as "photo" | "video",
+                          }))
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                      >
+                        <option value="photo">Photo</option>
+                        <option value="video">Video</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Description
+                    </label>
+                    <textarea
+                      value={galleryFormData.description}
+                      onChange={(e) =>
+                        setGalleryFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      rows={3}
+                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Category
+                      </label>
+                      <input
+                        type="text"
+                        list="gallery-categories"
+                        value={galleryFormData.category}
+                        onChange={(e) =>
+                          setGalleryFormData((prev) => ({
+                            ...prev,
+                            category: e.target.value,
+                          }))
+                        }
+                        placeholder="Type or select category"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                        required
+                      />
+                      <datalist id="gallery-categories">
+                        <option value="field">Field Operations</option>
+                        <option value="product">Product Showcase</option>
+                        <option value="training">Training</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.slug}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </datalist>
+                    </div>
+                    {galleryFormData.type === "video" ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Video URL
+                        </label>
+                        <input
+                          type="url"
+                          value={galleryFormData.url}
+                          onChange={(e) =>
+                            setGalleryFormData((prev) => ({
+                              ...prev,
+                              url: e.target.value,
+                            }))
+                          }
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Image Source
+                        </label>
+                        <div className="flex gap-2 mb-3">
+                          <button
+                            type="button"
+                            onClick={() => setGalleryImageMode("upload")}
+                            className={`px-3 py-1 text-sm rounded-md ${
+                              galleryImageMode === "upload"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            Upload File
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGalleryImageMode("url")}
+                            className={`px-3 py-1 text-sm rounded-md ${
+                              galleryImageMode === "url"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            Use URL
+                          </button>
+                        </div>
+
+                        {galleryImageMode === "upload" ? (
+                          <div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleGalleryFileSelect}
+                              className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-red-50 file:text-red-700
+                                dark:file:bg-red-900 dark:file:text-red-300
+                                hover:file:bg-red-100 dark:hover:file:bg-red-800"
+                              required={!galleryFormData.imageUrl}
+                            />
+                            {galleryImagePreview && (
+                              <div className="mt-3">
+                                <img
+                                  src={galleryImagePreview}
+                                  alt="Preview"
+                                  className="max-w-xs max-h-32 object-cover rounded-md border"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <input
+                            type="url"
+                            value={galleryFormData.imageUrl}
+                            onChange={(e) =>
+                              setGalleryFormData((prev) => ({
+                                ...prev,
+                                imageUrl: e.target.value,
+                              }))
+                            }
+                            placeholder="https://..."
+                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                            required={!gallerySelectedFile}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowGalleryForm(false)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                    >
+                      {editingGalleryItem ? "Update" : "Create"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Gallery Items Table */}
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                  Gallery Items
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {galleryItems.map((item) => (
+                      <tr key={item.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {item.title}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                            {item.description}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              item.type === "photo"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            }`}
+                          >
+                            {item.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                            {item.category === "field"
+                              ? "Field Operations"
+                              : item.category === "product"
+                              ? "Product Showcase"
+                              : "Training"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEditGalleryItem(item)}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGalleryItem(item.id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

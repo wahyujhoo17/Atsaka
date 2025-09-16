@@ -123,3 +123,67 @@ CREATE POLICY "Allow authenticated users to delete product images" ON storage.ob
 
 CREATE POLICY "Allow public to view product images" ON storage.objects
   FOR SELECT USING (bucket_id = 'product-images');
+
+-- Create gallery table
+CREATE TABLE IF NOT EXISTS gallery (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL CHECK (type IN ('photo', 'video')),
+  url TEXT, -- For video links (YouTube, Vimeo, etc.)
+  image_url TEXT, -- For uploaded photo files
+  category TEXT DEFAULT 'general',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on type for faster filtering
+CREATE INDEX IF NOT EXISTS idx_gallery_type ON gallery(type);
+CREATE INDEX IF NOT EXISTS idx_gallery_category ON gallery(category);
+
+-- Enable Row Level Security (RLS) for gallery
+ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for gallery
+CREATE POLICY "Allow public to view gallery" ON gallery
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated users to manage gallery" ON gallery
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create storage bucket for gallery images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gallery-images', 'gallery-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Create storage policies for gallery images
+CREATE POLICY "Allow authenticated users to upload gallery images" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'gallery-images'
+    AND auth.role() = 'authenticated'
+  );
+
+CREATE POLICY "Allow authenticated users to update gallery images" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'gallery-images'
+    AND auth.role() = 'authenticated'
+  );
+
+CREATE POLICY "Allow authenticated users to delete gallery images" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'gallery-images'
+    AND auth.role() = 'authenticated'
+  );
+
+CREATE POLICY "Allow public to view gallery images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'gallery-images');
+
+-- Insert sample gallery data
+INSERT INTO gallery (title, description, type, url, image_url, category) VALUES
+  ('Pemadam Kebakaran Hutan', 'Demonstrasi penggunaan alat pemadam kebakaran di area hutan', 'video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', NULL, 'product'),
+  ('Tim Rescue ATS', 'Tim rescue ATS dalam aksi penyelamatan', 'photo', NULL, 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800', 'training'),
+  ('Pelatihan Pemadam Kebakaran', 'Sesi pelatihan intensif untuk anggota pemadam kebakaran', 'video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', NULL, 'training'),
+  ('Equipment Showcase', 'Koleksi peralatan pemadam kebakaran ATS lengkap', 'photo', NULL, 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=800', 'product'),
+  ('Simulasi Kebakaran', 'Latihan simulasi penanganan kebakaran hutan', 'video', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', NULL, 'training'),
+  ('Base Camp Operation', 'Operasi base camp dalam penanganan kebakaran besar', 'photo', NULL, 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800', 'field')
+ON CONFLICT DO NOTHING;

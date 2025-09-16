@@ -12,11 +12,11 @@ const LazyImage: React.FC<{
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className={`relative w-full h-full bg-gray-300 dark:bg-gray-600 ${className}`}>
+    <div
+      className={`relative w-full h-full bg-gray-300 dark:bg-gray-600 ${className}`}
+    >
       {/* Placeholder with pulse animation */}
-      {!isLoaded && (
-        <div className="absolute inset-0 animate-pulse"></div>
-      )}
+      {!isLoaded && <div className="absolute inset-0 animate-pulse"></div>}
       <img
         src={src}
         alt={alt}
@@ -33,7 +33,6 @@ const LazyImage: React.FC<{
     </div>
   );
 };
-
 
 interface GalleryGridProps {
   items: GalleryItem[];
@@ -135,7 +134,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
                 <div className="absolute inset-0 w-full h-full">
                   {/* ReactPlayer with light=true loads only thumbnail initially */}
                   <ReactPlayer
-                    url={`https://www.youtube.com/watch?v=${item.imageUrl}`}
+                    url={item.url}
                     width="100%"
                     height="100%"
                     light={true} // Crucial for performance: loads thumbnail first
@@ -154,7 +153,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
                 <>
                   {/* Use LazyImage component for better perceived performance */}
                   <LazyImage
-                    src={item.imageUrl}
+                    src={item.imageUrl || ""}
                     alt={item.title}
                     // Apply hover effect to the LazyImage container
                     className="transition-transform duration-500 group-hover:scale-110"
@@ -198,7 +197,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
             <div className="w-full aspect-video bg-black flex items-center justify-center">
               {selectedItem.type === "video" ? (
                 <ReactPlayer
-                  url={`https://www.youtube.com/watch?v=${selectedItem.imageUrl}`}
+                  url={selectedItem.url}
                   playing={true} // Autoplay video in modal
                   controls={true} // Show controls in modal
                   width="100%"
@@ -207,12 +206,12 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
                   // config={{ youtube: { playerVars: { showinfo: 1 } } }}
                 />
               ) : (
-                 // Use LazyImage in modal too for consistency, though less critical
-                 <LazyImage
-                    src={selectedItem.imageUrl}
-                    alt={selectedItem.title}
-                    className="max-w-full max-h-[80vh] object-contain" // Keep modal specific styles
-                 />
+                // Use LazyImage in modal too for consistency, though less critical
+                <LazyImage
+                  src={selectedItem.imageUrl || ""}
+                  alt={selectedItem.title}
+                  className="max-w-full max-h-[80vh] object-contain" // Keep modal specific styles
+                />
               )}
             </div>
             <div className="p-4 md:p-6 flex-shrink-0">

@@ -21,10 +21,13 @@ export interface Category {
 export interface GalleryItem {
   id: string;
   title: string;
-  description: string;
-  imageUrl: string;
+  description?: string;
+  type: "photo" | "video";
+  url?: string; // For video links
+  imageUrl?: string; // For uploaded photos
   category: string;
-  type: "image" | "video"; // Add this line
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TestimonialItem {
