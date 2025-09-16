@@ -94,6 +94,19 @@ const ProductDetailPage: React.FC = () => {
     fetchProduct();
   }, [productSlug]);
 
+  useEffect(() => {
+    // Update slider navigation after product loads
+    if (product && slider1Ref.current && slider2Ref.current) {
+      // Small delay to ensure sliders are fully initialized
+      setTimeout(() => {
+        if (slider1Ref.current && slider2Ref.current) {
+          slider1Ref.current.slickGoTo(0);
+          slider2Ref.current.slickGoTo(0);
+        }
+      }, 100);
+    }
+  }, [product]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -239,7 +252,15 @@ const ProductDetailPage: React.FC = () => {
                         ).map((url, index) => (
                           <div
                             key={`thumb-${index}`}
-                            className="px-0.5 outline-none focus:outline-none"
+                            className="px-0.5 outline-none focus:outline-none cursor-pointer"
+                            onClick={() => {
+                              if (slider1Ref.current) {
+                                slider1Ref.current.slickGoTo(index);
+                              }
+                              if (slider2Ref.current) {
+                                slider2Ref.current.slickGoTo(index);
+                              }
+                            }}
                           >
                             <div className="relative w-12 h-12 cursor-pointer rounded overflow-hidden border-2 border-transparent slick-thumb-item group">
                               <LazyImage
