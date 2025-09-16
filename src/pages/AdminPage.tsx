@@ -443,8 +443,6 @@ const AdminPage: React.FC = () => {
       );
 
       if (imagesToDelete.length > 0) {
-        console.log("Deleting old images:", imagesToDelete);
-
         // Extract file paths from URLs and delete from storage
         const deletePromises = imagesToDelete.map(async (url) => {
           try {
@@ -465,7 +463,6 @@ const AdminPage: React.FC = () => {
         });
 
         await Promise.all(deletePromises);
-        console.log(`Successfully deleted ${imagesToDelete.length} old images`);
       }
     } catch (error) {
       console.error("Error cleaning up old images:", error);
@@ -542,16 +539,11 @@ const AdminPage: React.FC = () => {
   };
 
   const handleAddImageUrls = () => {
-    console.log("handleAddImageUrls called");
-    console.log("imageUrlsText:", imageUrlsText);
-
     // Parse URLs from text area (one per line)
     const urls = imageUrlsText
       .split("\n")
       .map((url) => url.trim())
       .filter((url) => url.length > 0 && url.startsWith("http"));
-
-    console.log("Parsed URLs:", urls);
 
     if (urls.length === 0) {
       alert("Please enter at least one valid image URL");
@@ -583,9 +575,6 @@ const AdminPage: React.FC = () => {
 
     // Add URLs to preview for display
     setImagePreviewUrls(urls);
-
-    console.log("Updated formData with URLs:", urls);
-    console.log("Set imagePreviewUrls:", urls);
 
     // Clear the text area
     setImageUrlsText("");

@@ -50,10 +50,6 @@ const ProductsPage: React.FC = () => {
       }));
 
       setProducts(transformedProducts);
-      console.log(
-        "Fetched products:",
-        transformedProducts.map((p) => ({ name: p.name, category: p.category }))
-      );
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -70,10 +66,6 @@ const ProductsPage: React.FC = () => {
 
       if (error) throw error;
       setCategories(data || []);
-      console.log(
-        "Fetched categories:",
-        data?.map((c) => ({ name: c.name, slug: c.slug }))
-      );
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
