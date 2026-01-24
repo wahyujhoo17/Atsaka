@@ -71,7 +71,7 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
     if (!token) {
-      navigate("/admin-login");
+      navigate("/sn-admin/login");
       return;
     }
     // Fetch categories first for product dropdown
@@ -110,7 +110,7 @@ const AdminPage: React.FC = () => {
 
   const handleLogout = () => {
     api.logout();
-    navigate("/admin-login");
+    navigate("/sn-admin/login");
   };
 
   const handleAdd = () => {

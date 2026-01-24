@@ -19,9 +19,9 @@ function App() {
         <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
           <Routes>
             {/* Admin routes without navbar/footer */}
-            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/sn-admin/login" element={<AdminLoginPage />} />
             <Route
-              path="/admin"
+              path="/sn-admin"
               element={
                 <ProtectedRoute>
                   <AdminPage />

@@ -17,7 +17,7 @@ const AdminLoginPage: React.FC = () => {
 
     try {
       await api.login(email, password);
-      navigate("/admin");
+      navigate("/sn-admin");
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
