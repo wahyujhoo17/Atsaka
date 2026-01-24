@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+import { api } from "../../lib/api";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,29 +13,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setIsAuthenticated(!!user);
+        const token = localStorage.getItem("auth_token");
+
+        if (!token) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Verify token with backend
+        await api.verifyToken();
+        setIsAuthenticated(true);
       } catch (error) {
         console.error("Error checking auth:", error);
         setIsAuthenticated(false);
+        localStorage.removeItem("auth_token");
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
-      setIsAuthenticated(!!session?.user);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   if (isLoading) {

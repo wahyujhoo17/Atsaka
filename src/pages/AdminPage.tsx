@@ -1,541 +1,255 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
+import toast, { Toaster } from "react-hot-toast";
 import {
-  uploadImages,
-  deleteImage,
-  validateImageFile,
-} from "../lib/imageUpload";
-import {
-  Plus,
-  Edit,
-  Trash2,
   LogOut,
   Package,
   Tag,
-  Upload,
+  Image as ImageIcon,
+  Plus,
+  Edit,
+  Trash2,
   X,
+  Save,
+  Upload,
+  Loader,
 } from "lucide-react";
-import { Product, Category, GalleryItem } from "../types";
 
-interface ProductFormData {
+interface Product {
+  id: string;
   name: string;
+  slug: string;
   category: string;
   description: string;
   features: string[];
   imageUrl: string;
   imageUrls: string[];
-  specifications: { [key: string]: string };
+  specifications: any;
 }
 
-interface CategoryFormData {
+interface Category {
+  id: string;
   name: string;
+  slug: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
+  parentId?: string | null;
+  parent?: Category;
+  children?: Category[];
 }
 
-interface GalleryFormData {
+interface GalleryItem {
+  id: string;
   title: string;
   description: string;
-  type: "photo" | "video";
-  url: string;
-  imageUrl: string;
+  type: string;
+  url?: string;
+  imageUrl?: string;
   category: string;
 }
 
 const AdminPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "products" | "categories" | "gallery"
   >("products");
-  const [showForm, setShowForm] = useState(false);
-  const [showCategoryForm, setShowCategoryForm] = useState(false);
-  const [showGalleryForm, setShowGalleryForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [editingGalleryItem, setEditingGalleryItem] =
-    useState<GalleryItem | null>(null);
-  const [galleryImageMode, setGalleryImageMode] = useState<"upload" | "url">(
-    "upload"
-  );
-  const [gallerySelectedFile, setGallerySelectedFile] = useState<File | null>(
-    null
-  );
-  const [galleryImagePreview, setGalleryImagePreview] = useState<string>("");
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: "",
-    category: "",
-    description: "",
-    features: [],
-    imageUrl: "",
-    imageUrls: [],
-    specifications: {},
-  });
-  const [categoryFormData, setCategoryFormData] = useState<CategoryFormData>({
-    name: "",
-    description: "",
-    imageUrl: "",
-  });
-  const [galleryFormData, setGalleryFormData] = useState<GalleryFormData>({
-    title: "",
-    description: "",
-    type: "photo",
-    url: "",
-    imageUrl: "",
-    category: "",
-  });
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [imageInputMode, setImageInputMode] = useState<"upload" | "url">(
-    "upload"
-  );
-  const [imageUrlsText, setImageUrlsText] = useState("");
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [featureInput, setFeatureInput] = useState("");
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [specKey, setSpecKey] = useState("");
+  const [specValue, setSpecValue] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingMultiple, setUploadingMultiple] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    fetchGalleryItems();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Transform data from database format to TypeScript interface
-      const transformedProducts = (data || []).map((product) => ({
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        category: product.category,
-        description: product.description || "",
-        features: product.features || [],
-        imageUrl: product.image_url || "",
-        imageUrls: product.image_urls || [],
-        specifications: product.specifications || {},
-      }));
-
-      setProducts(transformedProducts);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      navigate("/admin-login");
+      return;
     }
-  };
+    // Fetch categories first for product dropdown
+    fetchCategories();
+    fetchData();
+  }, [navigate, activeTab]);
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setCategories(data || []);
+      const data = await api.getCategories();
+      setCategories(data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
-  const fetchGalleryItems = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("gallery")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Transform data from database format to TypeScript interface
-      const transformedGalleryItems = (data || []).map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description || "",
-        type: item.type,
-        url: item.url || "",
-        imageUrl: item.image_url || "",
-        category: item.category,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      }));
-
-      setGalleryItems(transformedGalleryItems);
-    } catch (error) {
-      console.error("Error fetching gallery items:", error);
-    }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/admin/login");
-  };
-
-  // Image upload functions
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles: File[] = [];
-    const previewUrls: string[] = [];
-
-    files.forEach((file) => {
-      const validation = validateImageFile(file);
-      if (validation.valid) {
-        validFiles.push(file);
-        const url = URL.createObjectURL(file);
-        previewUrls.push(url);
-      } else {
-        alert(`File ${file.name}: ${validation.error}`);
+      if (activeTab === "products") {
+        const data = await api.getProducts();
+        setProducts(data);
+      } else if (activeTab === "categories") {
+        const data = await api.getCategories();
+        setCategories(data);
+      } else if (activeTab === "gallery") {
+        const data = await api.getGallery();
+        setGallery(data);
       }
-    });
-
-    setSelectedFiles((prev) => [...prev, ...validFiles]);
-    setImagePreviewUrls((prev) => [...prev, ...previewUrls]);
-  };
-
-  const handleImageUpload = async (): Promise<string[]> => {
-    if (selectedFiles.length === 0) return [];
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      const uploadResults = await uploadImages(
-        selectedFiles,
-        "product-images",
-        "products",
-        (progress) => {
-          setUploadProgress(progress.percentage);
-        }
-      );
-
-      const urls = uploadResults.map((result) => result.url);
-      return urls;
     } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload images. Please try again.");
-      return [];
+      console.error("Error fetching data:", error);
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+      setLoading(false);
     }
   };
 
-  const removeImagePreview = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviewUrls((prev) => {
-      const newUrls = [...prev];
-      URL.revokeObjectURL(newUrls[index]);
-      return newUrls.filter((_, i) => i !== index);
-    });
+  const handleLogout = () => {
+    api.logout();
+    navigate("/admin-login");
   };
 
-  // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const validFiles: File[] = [];
-    const previewUrls: string[] = [];
-
-    files.forEach((file) => {
-      const validation = validateImageFile(file);
-      if (validation.valid) {
-        validFiles.push(file);
-        const url = URL.createObjectURL(file);
-        previewUrls.push(url);
-      } else {
-        alert(`File ${file.name}: ${validation.error}`);
-      }
-    });
-
-    setSelectedFiles((prev) => [...prev, ...validFiles]);
-    setImagePreviewUrls((prev) => [...prev, ...previewUrls]);
-  };
-
-  // Category CRUD functions
-  const handleCategorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const slug = categoryFormData.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]+/g, "");
-
-      if (editingCategory) {
-        const { error } = await supabase
-          .from("categories")
-          .update({
-            name: categoryFormData.name,
-            slug,
-            description: categoryFormData.description,
-            image_url: categoryFormData.imageUrl,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingCategory.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("categories").insert({
-          name: categoryFormData.name,
-          slug,
-          description: categoryFormData.description,
-          image_url: categoryFormData.imageUrl,
-        });
-
-        if (error) throw error;
-      }
-
-      setShowCategoryForm(false);
-      setEditingCategory(null);
-      resetCategoryForm();
-      fetchCategories();
-    } catch (error) {
-      console.error("Error saving category:", error);
+  const handleAdd = () => {
+    setEditingItem(null);
+    setFeatureInput("");
+    setImageUrlInput("");
+    setSpecKey("");
+    setSpecValue("");
+    if (activeTab === "products") {
+      setFormData({
+        name: "",
+        slug: "",
+        category: "",
+        description: "",
+        features: [],
+        imageUrl: "",
+        imageUrls: [],
+        specifications: {},
+      });
+    } else if (activeTab === "categories") {
+      setFormData({
+        name: "",
+        slug: "",
+        description: "",
+        imageUrl: "",
+        parentId: null,
+      });
+    } else if (activeTab === "gallery") {
+      setFormData({
+        title: "",
+        description: "",
+        type: "photo",
+        url: "",
+        imageUrl: "",
+        category: "general",
+      });
     }
+    setShowModal(true);
   };
 
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-    setCategoryFormData({
-      name: category.name,
-      description: category.description || "",
-      imageUrl: category.imageUrl || "",
-    });
-    setShowCategoryForm(true);
+  const handleEdit = (item: any) => {
+    setEditingItem(item);
+    setFormData({ ...item });
+    setFeatureInput("");
+    setImageUrlInput("");
+    setSpecKey("");
+    setSpecValue("");
+    setShowModal(true);
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      try {
-        const { error } = await supabase
-          .from("categories")
-          .delete()
-          .eq("id", id);
-
-        if (error) throw error;
-        fetchCategories();
-      } catch (error) {
-        console.error("Error deleting category:", error);
-      }
-    }
-  };
-
-  const resetCategoryForm = () => {
-    setCategoryFormData({
-      name: "",
-      description: "",
-      imageUrl: "",
-    });
-  };
-
-  // Gallery CRUD functions
-  const handleGallerySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDelete = async (id: string) => {
+    if (!confirm("Yakin ingin menghapus?")) return;
 
     try {
-      let imageUrl = galleryFormData.imageUrl;
-
-      // Handle file upload for photos
-      if (
-        galleryFormData.type === "photo" &&
-        galleryImageMode === "upload" &&
-        gallerySelectedFile
-      ) {
-        // Delete old image if editing and switching from URL to upload, or uploading new file
-        if (
-          editingGalleryItem &&
-          editingGalleryItem.imageUrl &&
-          galleryImageMode === "upload"
-        ) {
-          await deleteOldGalleryImage(editingGalleryItem.imageUrl);
-        }
-        imageUrl = await uploadGalleryImage(gallerySelectedFile);
-      }
-
-      // Handle URL mode - if editing and changing URL, check if old image was uploaded
-      if (
-        galleryFormData.type === "photo" &&
-        galleryImageMode === "url" &&
-        editingGalleryItem &&
-        editingGalleryItem.imageUrl &&
-        editingGalleryItem.imageUrl !== galleryFormData.imageUrl
-      ) {
-        // Only delete if the old URL is from our storage (contains our Supabase domain)
-        if (editingGalleryItem.imageUrl.includes("supabase.co")) {
-          await deleteOldGalleryImage(editingGalleryItem.imageUrl);
-        }
-      }
-
-      if (editingGalleryItem) {
-        // Update existing gallery item
-        const { error } = await supabase
-          .from("gallery")
-          .update({
-            title: galleryFormData.title,
-            description: galleryFormData.description,
-            type: galleryFormData.type,
-            url: galleryFormData.type === "video" ? galleryFormData.url : null,
-            image_url: galleryFormData.type === "photo" ? imageUrl : null,
-            category: galleryFormData.category,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingGalleryItem.id);
-
-        if (error) throw error;
-      } else {
-        // Create new gallery item
-        const { error } = await supabase.from("gallery").insert({
-          title: galleryFormData.title,
-          description: galleryFormData.description,
-          type: galleryFormData.type,
-          url: galleryFormData.type === "video" ? galleryFormData.url : null,
-          image_url: galleryFormData.type === "photo" ? imageUrl : null,
-          category: galleryFormData.category,
-        });
-
-        if (error) throw error;
-      }
-
-      setShowGalleryForm(false);
-      setEditingGalleryItem(null);
-      setGallerySelectedFile(null);
-      setGalleryImagePreview("");
-      fetchGalleryItems();
-    } catch (error) {
-      console.error("Error saving gallery item:", error);
-    }
-  };
-
-  const handleEditGalleryItem = (item: GalleryItem) => {
-    setEditingGalleryItem(item);
-    setGalleryFormData({
-      title: item.title,
-      description: item.description || "",
-      type: item.type,
-      url: item.url || "",
-      imageUrl: item.imageUrl || "",
-      category: item.category,
-    });
-    // Set mode based on whether item has imageUrl or not
-    setGalleryImageMode(item.imageUrl ? "url" : "upload");
-    setGallerySelectedFile(null);
-    setGalleryImagePreview(item.imageUrl || "");
-    setShowGalleryForm(true);
-  };
-
-  const handleDeleteGalleryItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this gallery item?")) return;
-
-    try {
-      // First get the item data to check for image URL
-      const { data: item, error: fetchError } = await supabase
-        .from("gallery")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Delete the item from database
-      const { error } = await supabase.from("gallery").delete().eq("id", id);
-
-      if (error) throw error;
-
-      // Delete associated image from storage if it exists and is from our storage
-      if (item.image_url && item.image_url.includes("supabase.co")) {
-        await deleteOldGalleryImage(item.image_url);
-      }
-
-      fetchGalleryItems();
-    } catch (error) {
-      console.error("Error deleting gallery item:", error);
-    }
-  };
-
-  // Gallery image upload functions
-  const handleGalleryFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setGallerySelectedFile(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setGalleryImagePreview(e.target?.result as string);
+      // Helper function to extract filename from URL
+      const extractFilename = (url: string): string | null => {
+        if (!url || !url.includes("/uploads/")) return null;
+        const parts = url.split("/uploads/");
+        return parts.length > 1 ? parts[1] : null;
       };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const uploadGalleryImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2)}.${fileExt}`;
-    const filePath = `gallery/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("gallery-images")
-      .upload(filePath, file);
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data } = supabase.storage
-      .from("gallery-images")
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
-  };
-
-  const deleteOldGalleryImage = async (imageUrl: string) => {
-    if (!imageUrl) return;
-
-    try {
-      // Extract file path from Supabase public URL
-      // URL format: https://[project-id].supabase.co/storage/v1/object/public/gallery-images/gallery/[filename]
-      const urlParts = imageUrl.split(
-        "/storage/v1/object/public/gallery-images/"
-      );
-      if (urlParts.length === 2) {
-        const filePath = urlParts[1];
-
-        const { error } = await supabase.storage
-          .from("gallery-images")
-          .remove([filePath]);
-
-        if (error) {
-          console.warn("Failed to delete old image:", error);
-        } else {
-          console.log("Old image deleted successfully:", filePath);
+      // Delete associated images from storage before deleting the item
+      if (activeTab === "products") {
+        const product = products.find((p) => p.id === id);
+        if (product) {
+          // Delete main image
+          if (product.imageUrl) {
+            const filename = extractFilename(product.imageUrl);
+            if (filename) {
+              try {
+                await api.deleteImage(filename);
+              } catch (err) {
+                console.warn("Failed to delete main image:", err);
+              }
+            }
+          }
+          // Delete additional images
+          if (product.imageUrls && Array.isArray(product.imageUrls)) {
+            for (const url of product.imageUrls) {
+              const filename = extractFilename(url);
+              if (filename) {
+                try {
+                  await api.deleteImage(filename);
+                } catch (err) {
+                  console.warn("Failed to delete additional image:", err);
+                }
+              }
+            }
+          }
         }
+        await api.deleteProduct(id);
+      } else if (activeTab === "categories") {
+        const category = categories.find((c) => c.id === id);
+        if (category?.imageUrl) {
+          const filename = extractFilename(category.imageUrl);
+          if (filename) {
+            try {
+              await api.deleteImage(filename);
+            } catch (err) {
+              console.warn("Failed to delete category image:", err);
+            }
+          }
+        }
+        await api.deleteCategory(id);
+      } else if (activeTab === "gallery") {
+        const item = gallery.find((g) => g.id === id);
+        if (item?.imageUrl) {
+          const filename = extractFilename(item.imageUrl);
+          if (filename) {
+            try {
+              await api.deleteImage(filename);
+            } catch (err) {
+              console.warn("Failed to delete gallery image:", err);
+            }
+          }
+        }
+        await api.deleteGalleryItem(id);
       }
+      toast.success("Item berhasil dihapus", {
+        duration: 3000,
+        position: "top-right",
+        style: {
+          background: "#10b981",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
+      fetchData();
     } catch (error) {
-      console.warn("Error deleting old image:", error);
+      console.error("Error deleting:", error);
+      toast.error("Gagal menghapus item", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
     }
   };
 
@@ -543,315 +257,146 @@ const AdminPage: React.FC = () => {
     e.preventDefault();
 
     try {
-      // Upload images first if any files are selected
-      let uploadedUrls: string[] = [];
-      if (selectedFiles.length > 0) {
-        uploadedUrls = await handleImageUpload();
-      }
-
-      // Use uploaded URLs or existing URLs
-      let mainImageUrl: string;
-      let allImageUrls: string[];
-
-      if (uploadedUrls.length > 0) {
-        // When uploading new images, use all uploaded URLs
-        mainImageUrl = uploadedUrls[0];
-        allImageUrls = uploadedUrls;
-      } else if (editingProduct) {
-        // When editing without new uploads, check if new URLs were added via form
-        if (formData.imageUrls && formData.imageUrls.length > 0) {
-          // User added new URLs via "Add Image URLs" feature
-          mainImageUrl = formData.imageUrls[0];
-          allImageUrls = formData.imageUrls;
+      if (activeTab === "products") {
+        if (editingItem) {
+          await api.updateProduct(editingItem.id, formData);
         } else {
-          // Use existing images from the product being edited
-          mainImageUrl = editingProduct.imageUrl;
-          allImageUrls = editingProduct.imageUrl
-            ? [editingProduct.imageUrl, ...(editingProduct.imageUrls || [])]
-            : [];
+          await api.createProduct(formData);
         }
-      } else {
-        // When creating without uploads, use form data (including manually added URLs)
-        mainImageUrl =
-          formData.imageUrl ||
-          (formData.imageUrls && formData.imageUrls.length > 0
-            ? formData.imageUrls[0]
-            : "");
-        allImageUrls =
-          formData.imageUrls && formData.imageUrls.length > 0
-            ? formData.imageUrls
-            : formData.imageUrl
-            ? [formData.imageUrl]
-            : [];
+      } else if (activeTab === "categories") {
+        await api.createCategory(formData);
+      } else if (activeTab === "gallery") {
+        await api.createGalleryItem(formData);
       }
 
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]+/g, "");
-
-      if (editingProduct) {
-        const { error } = await supabase
-          .from("products")
-          .update({
-            name: formData.name,
-            slug,
-            category: formData.category,
-            description: formData.description,
-            features: formData.features,
-            image_url: mainImageUrl,
-            image_urls: allImageUrls,
-            specifications: formData.specifications,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingProduct.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("products").insert({
-          name: formData.name,
-          slug,
-          category: formData.category,
-          description: formData.description,
-          features: formData.features,
-          image_url: mainImageUrl,
-          image_urls: allImageUrls,
-          specifications: formData.specifications,
-        });
-
-        if (error) throw error;
-      }
-
-      // Clean up old images from storage if editing and new images were uploaded
-      if (editingProduct && uploadedUrls.length > 0) {
-        await cleanupOldImages(editingProduct, allImageUrls);
-      }
-
-      // Clean up preview URLs
-      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-
-      setShowForm(false);
-      setEditingProduct(null);
-      resetForm();
-      setSelectedFiles([]);
-      setImagePreviewUrls([]);
-      fetchProducts();
-    } catch (error) {
-      console.error("Error saving product:", error);
-      alert("Failed to save product. Please try again.");
-    }
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      description: product.description,
-      features: product.features,
-      imageUrl: product.imageUrl,
-      imageUrls: product.imageUrls,
-      specifications: product.specifications,
-    });
-    setImageInputMode("upload");
-    setImageUrlsText("");
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        const { error } = await supabase.from("products").delete().eq("id", id);
-
-        if (error) throw error;
-        fetchProducts();
-      } catch (error) {
-        console.error("Error deleting product:", error);
-      }
-    }
-  };
-
-  const cleanupOldImages = async (
-    oldProduct: Product,
-    newImageUrls: string[]
-  ) => {
-    try {
-      // Get all old image URLs
-      const oldImageUrls = oldProduct.imageUrl
-        ? [oldProduct.imageUrl, ...(oldProduct.imageUrls || [])]
-        : oldProduct.imageUrls || [];
-
-      // Find images that are in old but not in new
-      const imagesToDelete = oldImageUrls.filter(
-        (oldUrl) => !newImageUrls.includes(oldUrl)
+      toast.success(
+        editingItem ? "Data berhasil diupdate" : "Data berhasil ditambahkan",
+        {
+          duration: 3000,
+          position: "top-right",
+          style: {
+            background: "#10b981",
+            color: "#fff",
+            fontWeight: "500",
+          },
+        },
       );
-
-      if (imagesToDelete.length > 0) {
-        // Extract file paths from URLs and delete from storage
-        const deletePromises = imagesToDelete.map(async (url) => {
-          try {
-            // Extract path from Supabase URL
-            // URL format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-            const urlParts = url.split("/storage/v1/object/public/");
-            if (urlParts.length === 2) {
-              const pathParts = urlParts[1].split("/");
-              if (pathParts.length >= 2) {
-                const bucket = pathParts[0];
-                const filePath = pathParts.slice(1).join("/");
-                await deleteImage(filePath, bucket);
-              }
-            }
-          } catch (error) {
-            console.error("Error deleting image:", url, error);
-          }
-        });
-
-        await Promise.all(deletePromises);
-      }
+      closeModal();
+      fetchData();
     } catch (error) {
-      console.error("Error cleaning up old images:", error);
-      // Don't throw error here as it's not critical for the main operation
+      console.error("Error saving:", error);
+      toast.error("Gagal menyimpan data", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
     }
   };
 
-  const addFeature = () => {
-    setFormData((prev) => ({
-      ...prev,
-      features: [...prev.features, ""],
-    }));
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
   };
 
-  const updateFeature = (index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: prev.features.map((feature, i) =>
-        i === index ? value : feature
-      ),
-    }));
-  };
+  const handleImageUpload = async (file: File) => {
+    try {
+      setUploadingImage(true);
+      const result = await api.uploadImage(file);
 
-  const removeFeature = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index),
-    }));
-  };
+      // Get full URL based on environment
+      const baseUrl =
+        import.meta.env.VITE_API_URL?.replace("/api", "") ||
+        "http://localhost:3001";
+      const fullUrl = `${baseUrl}${result.url}`;
 
-  const addSpecification = () => {
-    setFormData((prev) => ({
-      ...prev,
-      specifications: {
-        ...prev.specifications,
-        "": "",
-      },
-    }));
-  };
-
-  const updateSpecificationKey = (index: number, newKey: string) => {
-    const entries = Object.entries(formData.specifications);
-    const [oldKey] = entries[index];
-    const newSpecs = { ...formData.specifications };
-    delete newSpecs[oldKey];
-    newSpecs[newKey] = entries[index][1];
-    setFormData((prev) => ({
-      ...prev,
-      specifications: newSpecs,
-    }));
-  };
-
-  const updateSpecificationValue = (index: number, value: string) => {
-    const entries = Object.entries(formData.specifications);
-    const [key] = entries[index];
-    setFormData((prev) => ({
-      ...prev,
-      specifications: {
-        ...prev.specifications,
-        [key]: value,
-      },
-    }));
-  };
-
-  const removeSpecification = (index: number) => {
-    const entries = Object.entries(formData.specifications);
-    const [keyToRemove] = entries[index];
-    const newSpecs = { ...formData.specifications };
-    delete newSpecs[keyToRemove];
-    setFormData((prev) => ({
-      ...prev,
-      specifications: newSpecs,
-    }));
-  };
-
-  const handleAddImageUrls = () => {
-    // Parse URLs from text area (one per line)
-    const urls = imageUrlsText
-      .split("\n")
-      .map((url) => url.trim())
-      .filter((url) => url.length > 0 && url.startsWith("http"));
-
-    if (urls.length === 0) {
-      alert("Please enter at least one valid image URL");
-      return;
+      setFormData({ ...formData, imageUrl: fullUrl });
+      toast.success(`Gambar berhasil diupload (${result.size}KB)`, {
+        duration: 3000,
+        position: "top-right",
+        style: {
+          background: "#10b981",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(error.message || "Gagal upload gambar", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
+    } finally {
+      setUploadingImage(false);
     }
+  };
 
-    // More permissive validation - just check if URLs look reasonable
-    const invalidUrls = urls.filter((url) => {
-      // Basic URL validation
-      try {
-        new URL(url);
-        return false; // Valid URL
-      } catch {
-        return true; // Invalid URL
-      }
-    });
+  const handleMultipleImageUpload = async (file: File) => {
+    try {
+      setUploadingMultiple(true);
+      const result = await api.uploadImage(file);
 
-    if (invalidUrls.length > 0) {
-      alert(`Some URLs are invalid: ${invalidUrls.join(", ")}`);
-      return;
+      // Get full URL based on environment
+      const baseUrl =
+        import.meta.env.VITE_API_URL?.replace("/api", "") ||
+        "http://localhost:3001";
+      const fullUrl = `${baseUrl}${result.url}`;
+
+      setFormData({
+        ...formData,
+        imageUrls: [...(formData.imageUrls || []), fullUrl],
+      });
+      toast.success(`Gambar berhasil ditambahkan (${result.size}KB)`, {
+        duration: 3000,
+        position: "top-right",
+        style: {
+          background: "#10b981",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(error.message || "Gagal upload gambar", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
+    } finally {
+      setUploadingMultiple(false);
     }
-
-    // Update form data
-    setFormData((prev) => ({
-      ...prev,
-      imageUrl: urls[0] || "",
-      imageUrls: urls,
-    }));
-
-    // Add URLs to preview for display
-    setImagePreviewUrls(urls);
-
-    // Clear the text area
-    setImageUrlsText("");
-
-    // Show success message
-    alert(`Successfully added ${urls.length} image URL(s)!`);
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      category: "",
-      description: "",
-      features: [],
-      imageUrl: "",
-      imageUrls: [],
-      specifications: {},
-    });
-    // Reset image upload state
-    setSelectedFiles([]);
-    setImagePreviewUrls([]);
-    setUploadProgress(0);
-    setIsUploading(false);
-    setImageInputMode("upload");
-    setImageUrlsText("");
+  const closeModal = () => {
+    setShowModal(false);
+    setFeatureInput("");
+    setImageUrlInput("");
+    setSpecKey("");
+    setSpecValue("");
+    setFormData({});
+    setEditingItem(null);
   };
 
-  if (loading) {
+  if (loading && !showModal) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Memuat...</p>
         </div>
       </div>
     );
@@ -859,970 +404,1082 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Toaster />
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Package className="h-8 w-8 text-red-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Admin Dashboard
-              </h1>
-            </div>
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Admin Dashboard
+            </h1>
             <button
               onClick={handleLogout}
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="w-4 h-4" />
               Logout
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Tabs */}
-      <div className="bg-white dark:bg-gray-800 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tabs */}
+        <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab("products")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`${
                 activeTab === "products"
-                  ? "border-red-500 text-red-600 dark:text-red-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
-              <Package className="h-4 w-4 inline mr-2" />
+              <Package className="w-5 h-5" />
               Products
             </button>
             <button
               onClick={() => setActiveTab("categories")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`${
                 activeTab === "categories"
-                  ? "border-red-500 text-red-600 dark:text-red-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
-              <Tag className="h-4 w-4 inline mr-2" />
+              <Tag className="w-5 h-5" />
               Categories
             </button>
             <button
               onClick={() => setActiveTab("gallery")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`${
                 activeTab === "gallery"
-                  ? "border-red-500 text-red-600 dark:text-red-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
-              <Upload className="h-4 w-4 inline mr-2" />
+              <ImageIcon className="w-5 h-5" />
               Gallery
             </button>
           </nav>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "products" ? (
-          <>
-            {/* Products Actions */}
-            <div className="mb-8">
-              <button
-                onClick={() => {
-                  setEditingProduct(null);
-                  resetForm();
-                  setShowForm(true);
-                }}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </button>
-            </div>
+        {/* Add Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Tambah{" "}
+            {activeTab === "products"
+              ? "Product"
+              : activeTab === "categories"
+                ? "Category"
+                : "Gallery Item"}
+          </button>
+        </div>
 
-            {/* Form */}
-            {showForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  {editingProduct ? "Edit Product" : "Add New Product"}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        list="product-categories"
-                        value={formData.category}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            category: e.target.value,
-                          }))
-                        }
-                        placeholder="Type or select category"
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                        required
-                      />
-                      <datalist id="product-categories">
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.slug}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </datalist>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Features
-                    </label>
-                    {formData.features.map((feature, index) => (
-                      <div key={index} className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={feature}
-                          onChange={(e) => updateFeature(index, e.target.value)}
-                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                          placeholder="Feature description"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeFeature(index)}
-                          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addFeature}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                    >
-                      Add Feature
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Technical Specifications
-                    </label>
-                    {Object.entries(formData.specifications).map(
-                      ([key, value], index) => (
-                        <div key={index} className="flex gap-2 mb-2">
-                          <input
-                            type="text"
-                            value={key}
-                            onChange={(e) =>
-                              updateSpecificationKey(index, e.target.value)
-                            }
-                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                            placeholder="Specification name (e.g., Model, Engine Type)"
-                          />
-                          <input
-                            type="text"
-                            value={value}
-                            onChange={(e) =>
-                              updateSpecificationValue(index, e.target.value)
-                            }
-                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                            placeholder="Specification value"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeSpecification(index)}
-                            className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )
-                    )}
-                    <button
-                      type="button"
-                      onClick={addSpecification}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                    >
-                      Add Specification
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Product Images
-                    </label>
-
-                    {/* Image Input Mode Toggle */}
-                    <div className="mb-4">
-                      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                        <button
-                          type="button"
-                          onClick={() => setImageInputMode("upload")}
-                          className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                            imageInputMode === "upload"
-                              ? "bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm"
-                              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                        >
-                          Upload Images
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setImageInputMode("url")}
-                          className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                            imageInputMode === "url"
-                              ? "bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm"
-                              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                        >
-                          Add URLs
-                        </button>
-                      </div>
-                    </div>
-
-                    {imageInputMode === "upload" ? (
-                      /* File Input */
-                      <div
-                        className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${
-                          isDragOver
-                            ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                      >
-                        <div className="space-y-1 text-center">
-                          <Upload
-                            className={`mx-auto h-12 w-12 ${
-                              isDragOver ? "text-red-500" : "text-gray-400"
-                            }`}
-                          />
-                          <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                            <label
-                              htmlFor="file-upload"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500"
-                            >
-                              <span>Upload images</span>
-                              <input
-                                id="file-upload"
-                                name="file-upload"
-                                type="file"
-                                className="sr-only"
-                                multiple
-                                accept="image/*"
-                                onChange={handleFileSelect}
-                              />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            PNG, JPG, JPEG, WebP up to 5MB each
-                          </p>
-                          {isDragOver && (
-                            <p className="text-sm text-red-600 font-medium">
-                              Drop images here to upload
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      /* URL Input */
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Image URLs
-                          </label>
-                          <textarea
-                            value={imageUrlsText}
-                            onChange={(e) => setImageUrlsText(e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                            rows={4}
-                            placeholder="Enter image URLs, one per line:&#10;https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Enter one image URL per line. The first URL will be
-                            used as the main image.
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleAddImageUrls}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                        >
-                          Add Image URLs
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Upload Progress */}
-                    {isUploading && (
-                      <div className="mt-4">
-                        <div className="bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                          <div
-                            className="bg-red-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Uploading... {Math.round(uploadProgress)}%
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Image Previews */}
-                    {imagePreviewUrls.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Selected Images ({imagePreviewUrls.length})
-                        </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {imagePreviewUrls.map((url, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={url}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-24 object-cover rounded-md border border-gray-300 dark:border-gray-600"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeImagePreview(index)}
-                                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                              {index === 0 && (
-                                <span className="absolute bottom-1 left-1 bg-red-600 text-white text-xs px-2 py-1 rounded">
-                                  Main
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Existing Images (when editing) */}
-                    {editingProduct &&
-                      editingProduct.imageUrls &&
-                      editingProduct.imageUrls.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Current Images
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {editingProduct.imageUrls.map((url, index) => (
-                              <div key={index} className="relative">
-                                <img
-                                  src={url}
-                                  alt={`Current ${index + 1}`}
-                                  className="w-full h-24 object-cover rounded-md border border-gray-300 dark:border-gray-600"
-                                />
-                                {index === 0 && (
-                                  <span className="absolute bottom-1 left-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                                    Main
-                                  </span>
-                                )}
-                                {index > 0 && (
-                                  <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                                    Additional
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-
-                  <div className="flex gap-4">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
-                      {editingProduct ? "Update" : "Create"} Product
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowForm(false);
-                        setEditingProduct(null);
-                        resetForm();
-                      }}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Products Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold">
-                  Products ({products.length})
-                </h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+        {/* Content */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          {activeTab === "products" && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Slug
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {products.length === 0 ? (
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        Belum ada produk. Klik "Tambah Product" untuk menambah.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {products.map((product) => (
+                  ) : (
+                    products.map((product) => (
                       <tr key={product.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {product.name}
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {product.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            {product.category}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {product.category}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {product.slug}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleEdit(product)}
-                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-4"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="w-4 h-4 inline" />
                           </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            className="text-red-600 hover:text-red-900 dark:text-red-400"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4 inline" />
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </>
-        ) : activeTab === "categories" ? (
-          <>
-            {/* Categories Actions */}
-            <div className="mb-8">
-              <button
-                onClick={() => {
-                  setEditingCategory(null);
-                  resetCategoryForm();
-                  setShowCategoryForm(true);
-                }}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
-              </button>
-            </div>
+          )}
 
-            {/* Categories Form */}
-            {showCategoryForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  {editingCategory ? "Edit Category" : "Add New Category"}
-                </h2>
-                <form onSubmit={handleCategorySubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {activeTab === "categories" && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Name
-                    </label>
-                    <input
-                      type="text"
-                      value={categoryFormData.name}
-                      onChange={(e) =>
-                        setCategoryFormData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Slug
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Description
-                    </label>
-                    <textarea
-                      value={categoryFormData.description}
-                      onChange={(e) =>
-                        setCategoryFormData((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={categoryFormData.imageUrl}
-                      onChange={(e) =>
-                        setCategoryFormData((prev) => ({
-                          ...prev,
-                          imageUrl: e.target.value,
-                        }))
-                      }
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </div>
-
-                  <div className="flex gap-4">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
-                      {editingCategory ? "Update" : "Create"} Category
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowCategoryForm(false);
-                        setEditingCategory(null);
-                        resetCategoryForm();
-                      }}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Categories Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold">
-                  Categories ({categories.length})
-                </h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {categories.length === 0 ? (
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Slug
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <td
+                        colSpan={3}
+                        className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        Belum ada kategori. Klik "Tambah Category" untuk
+                        menambah.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {categories.map((category) => (
-                      <tr key={category.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {category.name}
-                          </div>
+                  ) : (
+                    categories.map((category) => (
+                      <tr
+                        key={category.id}
+                        className={
+                          category.parentId ? "bg-gray-50 dark:bg-gray-800" : ""
+                        }
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {category.parentId && (
+                            <span className="mr-2 text-gray-400">↳</span>
+                          )}
+                          {category.name}
+                          {category.parent && (
+                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                              (Sub dari: {category.parent.name})
+                            </span>
+                          )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {category.slug}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {category.slug}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                            {category.description || "-"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleEditCategory(category)}
-                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(category.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {category.description}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </>
-        ) : activeTab === "gallery" ? (
-          <>
-            {/* Gallery Actions */}
-            <div className="mb-8">
-              <button
-                onClick={() => {
-                  setEditingGalleryItem(null);
-                  setGalleryFormData({
-                    title: "",
-                    description: "",
-                    type: "photo",
-                    url: "",
-                    imageUrl: "",
-                    category: "",
-                  });
-                  setGalleryImageMode("upload");
-                  setGallerySelectedFile(null);
-                  setGalleryImagePreview("");
-                  setShowGalleryForm(true);
-                }}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Gallery Item
-              </button>
-            </div>
+          )}
 
-            {/* Gallery Form */}
-            {showGalleryForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  {editingGalleryItem
-                    ? "Edit Gallery Item"
-                    : "Add New Gallery Item"}
+          {activeTab === "gallery" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+              {gallery.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+                  Belum ada gallery item. Klik "Tambah Gallery Item" untuk
+                  menambah.
+                </div>
+              ) : (
+                gallery.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden"
+                  >
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        {item.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 dark:text-gray-500">
+                          {item.type} • {item.category}
+                        </span>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {editingItem ? "Edit" : "Tambah"}{" "}
+                  {activeTab === "products"
+                    ? "Product"
+                    : activeTab === "categories"
+                      ? "Category"
+                      : "Gallery Item"}
                 </h2>
-                <form onSubmit={handleGallerySubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {activeTab === "products" && (
+                  <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name || ""}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            name: e.target.value,
+                            slug: generateSlug(e.target.value),
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Slug
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.slug || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, slug: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category
+                      </label>
+                      <select
+                        required
+                        value={formData.category || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Pilih Category</option>
+                        {categories
+                          .filter((cat) => !cat.parentId)
+                          .map((cat) => (
+                            <React.Fragment key={cat.id}>
+                              <option value={cat.slug}>{cat.name}</option>
+                              {cat.children?.map((child) => (
+                                <option key={child.id} value={child.slug}>
+                                  &nbsp;&nbsp;↳ {child.name}
+                                </option>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.description || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Main Image */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Main Image
+                      </label>
+
+                      {/* Image Preview */}
+                      {formData.imageUrl && (
+                        <div className="mb-3 relative inline-block">
+                          <img
+                            src={formData.imageUrl}
+                            alt="Preview"
+                            className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({ ...formData, imageUrl: "" })
+                            }
+                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        {/* Upload Button */}
+                        <label className="flex-1 cursor-pointer">
+                          <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            {uploadingImage ? (
+                              <>
+                                <Loader className="w-4 h-4 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4" />
+                                Upload Image
+                              </>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingImage}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file);
+                            }}
+                          />
+                        </label>
+
+                        {/* OR use URL */}
+                        <input
+                          type="url"
+                          value={formData.imageUrl || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              imageUrl: e.target.value,
+                            })
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          placeholder="Or paste image URL"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Upload gambar (auto-compress ke max 200KB) atau paste
+                        URL
+                      </p>
+                    </div>
+
+                    {/* Multiple Images */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Additional Images
+                      </label>
+
+                      {/* Image Previews */}
+                      {formData.imageUrls && formData.imageUrls.length > 0 && (
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {formData.imageUrls.map(
+                            (url: string, index: number) => (
+                              <div
+                                key={index}
+                                className="relative inline-block"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-24 h-24 object-cover rounded-lg border-2 border-gray-300"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({
+                                      ...formData,
+                                      imageUrls: formData.imageUrls.filter(
+                                        (_: any, i: number) => i !== index,
+                                      ),
+                                    });
+                                  }}
+                                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          {/* Upload Button */}
+                          <label className="cursor-pointer">
+                            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                              {uploadingMultiple ? (
+                                <>
+                                  <Loader className="w-4 h-4 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-4 h-4" />
+                                  Upload
+                                </>
+                              )}
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingMultiple}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleMultipleImageUpload(file);
+                              }}
+                            />
+                          </label>
+
+                          {/* URL Input */}
+                          <input
+                            type="url"
+                            value={imageUrlInput}
+                            onChange={(e) => setImageUrlInput(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (imageUrlInput.trim()) {
+                                  setFormData({
+                                    ...formData,
+                                    imageUrls: [
+                                      ...(formData.imageUrls || []),
+                                      imageUrlInput.trim(),
+                                    ],
+                                  });
+                                  setImageUrlInput("");
+                                }
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="https://example.com/image.jpg (Enter to add)"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (imageUrlInput.trim()) {
+                                setFormData({
+                                  ...formData,
+                                  imageUrls: [
+                                    ...(formData.imageUrls || []),
+                                    imageUrlInput.trim(),
+                                  ],
+                                });
+                                setImageUrlInput("");
+                              }
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {formData.imageUrls &&
+                          formData.imageUrls.length > 0 && (
+                            <div className="space-y-1">
+                              {formData.imageUrls.map(
+                                (url: string, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-2 text-sm"
+                                  >
+                                    <span className="flex-1 text-gray-600 dark:text-gray-400 truncate">
+                                      {url}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData({
+                                          ...formData,
+                                          imageUrls: formData.imageUrls.filter(
+                                            (_: any, i: number) => i !== index,
+                                          ),
+                                        });
+                                      }}
+                                      className="text-red-600 hover:text-red-800"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* Features Array */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Features
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={featureInput}
+                            onChange={(e) => setFeatureInput(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (featureInput.trim()) {
+                                  setFormData({
+                                    ...formData,
+                                    features: [
+                                      ...(formData.features || []),
+                                      featureInput.trim(),
+                                    ],
+                                  });
+                                  setFeatureInput("");
+                                }
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="Enter feature (Enter to add)"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (featureInput.trim()) {
+                                setFormData({
+                                  ...formData,
+                                  features: [
+                                    ...(formData.features || []),
+                                    featureInput.trim(),
+                                  ],
+                                });
+                                setFeatureInput("");
+                              }
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {formData.features && formData.features.length > 0 && (
+                          <ul className="space-y-1">
+                            {formData.features.map(
+                              (feature: string, index: number) => (
+                                <li
+                                  key={index}
+                                  className="flex items-center gap-2 text-sm"
+                                >
+                                  <span className="flex-1 text-gray-600 dark:text-gray-400">
+                                    • {feature}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        features: formData.features.filter(
+                                          (_: any, i: number) => i !== index,
+                                        ),
+                                      });
+                                    }}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Specifications Object */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Specifications
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={specKey}
+                            onChange={(e) => setSpecKey(e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="Key (e.g., Model)"
+                          />
+                          <input
+                            type="text"
+                            value={specValue}
+                            onChange={(e) => setSpecValue(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (specKey.trim() && specValue.trim()) {
+                                  setFormData({
+                                    ...formData,
+                                    specifications: {
+                                      ...(formData.specifications || {}),
+                                      [specKey.trim()]: specValue.trim(),
+                                    },
+                                  });
+                                  setSpecKey("");
+                                  setSpecValue("");
+                                }
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="Value (Enter to add)"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (specKey.trim() && specValue.trim()) {
+                                setFormData({
+                                  ...formData,
+                                  specifications: {
+                                    ...(formData.specifications || {}),
+                                    [specKey.trim()]: specValue.trim(),
+                                  },
+                                });
+                                setSpecKey("");
+                                setSpecValue("");
+                              }
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {formData.specifications &&
+                          Object.keys(formData.specifications).length > 0 && (
+                            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-1">
+                              {Object.entries(formData.specifications).map(
+                                ([key, value], index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-2 text-sm"
+                                  >
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                      {key}:
+                                    </span>
+                                    <span className="flex-1 text-gray-600 dark:text-gray-400">
+                                      {String(value)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newSpecs = {
+                                          ...formData.specifications,
+                                        };
+                                        delete newSpecs[key];
+                                        setFormData({
+                                          ...formData,
+                                          specifications: newSpecs,
+                                        });
+                                      }}
+                                      className="text-red-600 hover:text-red-800"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === "categories" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name || ""}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            name: e.target.value,
+                            slug: generateSlug(e.target.value),
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Slug
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.slug || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, slug: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.description || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Category Image */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category Image (Optional)
+                      </label>
+
+                      {/* Image Preview */}
+                      {formData.imageUrl && (
+                        <div className="mb-3 relative inline-block">
+                          <img
+                            src={formData.imageUrl}
+                            alt="Category Preview"
+                            className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({ ...formData, imageUrl: "" })
+                            }
+                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        {/* Upload Button */}
+                        <label className="flex-1 cursor-pointer">
+                          <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            {uploadingImage ? (
+                              <>
+                                <Loader className="w-4 h-4 animate-spin" />
+                                <span>Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4" />
+                                <span>Upload Image</span>
+                              </>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingImage}
+                            onChange={handleImageUpload}
+                          />
+                        </label>
+
+                        {/* Alternative: URL Input */}
+                        <input
+                          type="url"
+                          value={formData.imageUrl || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              imageUrl: e.target.value,
+                            })
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          placeholder="Or paste image URL"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Upload gambar (auto-compress ke max 200KB) atau paste
+                        URL
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Parent Category (Optional)
+                      </label>
+                      <select
+                        value={formData.parentId || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            parentId: e.target.value || null,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">
+                          -- Tidak ada parent (Top Level) --
+                        </option>
+                        {categories
+                          .filter(
+                            (cat) =>
+                              !cat.parentId && cat.id !== editingItem?.id,
+                          )
+                          .map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Pilih category parent jika ini adalah sub-category
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === "gallery" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Title
                       </label>
                       <input
                         type="text"
-                        value={galleryFormData.title}
-                        onChange={(e) =>
-                          setGalleryFormData((prev) => ({
-                            ...prev,
-                            title: e.target.value,
-                          }))
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
                         required
+                        value={formData.title || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Type
                       </label>
                       <select
-                        value={galleryFormData.type}
+                        required
+                        value={formData.type || "photo"}
                         onChange={(e) =>
-                          setGalleryFormData((prev) => ({
-                            ...prev,
-                            type: e.target.value as "photo" | "video",
-                          }))
+                          setFormData({ ...formData, type: e.target.value })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         <option value="photo">Photo</option>
                         <option value="video">Video</option>
                       </select>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Description
-                    </label>
-                    <textarea
-                      value={galleryFormData.description}
-                      onChange={(e) =>
-                        setGalleryFormData((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {formData.type === "video"
+                          ? "Video URL (YouTube)"
+                          : "Gallery Image"}
+                      </label>
+
+                      {formData.type === "photo" && (
+                        <>
+                          {/* Image Preview */}
+                          {formData.imageUrl && (
+                            <div className="mb-3 relative inline-block">
+                              <img
+                                src={formData.imageUrl}
+                                alt="Preview"
+                                className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData({ ...formData, imageUrl: "" })
+                                }
+                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            {/* Upload Button */}
+                            <label className="flex-1 cursor-pointer">
+                              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                {uploadingImage ? (
+                                  <>
+                                    <Loader className="w-4 h-4 animate-spin" />
+                                    <span>Uploading...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4" />
+                                    <span>Upload Image</span>
+                                  </>
+                                )}
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingImage}
+                                onChange={handleImageUpload}
+                              />
+                            </label>
+
+                            {/* Alternative: URL Input */}
+                            <input
+                              type="url"
+                              value={formData.imageUrl || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  imageUrl: e.target.value,
+                                })
+                              }
+                              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                              placeholder="Or paste image URL"
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Upload gambar (auto-compress ke max 200KB) atau
+                            paste URL
+                          </p>
+                        </>
+                      )}
+
+                      {formData.type === "video" && (
+                        <input
+                          type="url"
+                          value={formData.url || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, url: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          placeholder="Paste YouTube URL"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.description || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Category
                       </label>
                       <input
                         type="text"
-                        list="gallery-categories"
-                        value={galleryFormData.category}
+                        value={formData.category || "general"}
                         onChange={(e) =>
-                          setGalleryFormData((prev) => ({
-                            ...prev,
-                            category: e.target.value,
-                          }))
+                          setFormData({ ...formData, category: e.target.value })
                         }
-                        placeholder="Type or select category"
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
-                        required
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       />
-                      <datalist id="gallery-categories">
-                        <option value="field">Field Operations</option>
-                        <option value="product">Product Showcase</option>
-                        <option value="training">Training</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.slug}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </datalist>
                     </div>
-                    {galleryFormData.type === "video" ? (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Video URL
-                        </label>
-                        <input
-                          type="url"
-                          value={galleryFormData.url}
-                          onChange={(e) =>
-                            setGalleryFormData((prev) => ({
-                              ...prev,
-                              url: e.target.value,
-                            }))
-                          }
-                          placeholder="https://www.youtube.com/watch?v=..."
-                          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
-                          required
-                        />
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Image Source
-                        </label>
-                        <div className="flex gap-2 mb-3">
-                          <button
-                            type="button"
-                            onClick={() => setGalleryImageMode("upload")}
-                            className={`px-3 py-1 text-sm rounded-md ${
-                              galleryImageMode === "upload"
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                            }`}
-                          >
-                            Upload File
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setGalleryImageMode("url")}
-                            className={`px-3 py-1 text-sm rounded-md ${
-                              galleryImageMode === "url"
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                            }`}
-                          >
-                            Use URL
-                          </button>
-                        </div>
+                  </>
+                )}
 
-                        {galleryImageMode === "upload" ? (
-                          <div>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleGalleryFileSelect}
-                              className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-red-50 file:text-red-700
-                                dark:file:bg-red-900 dark:file:text-red-300
-                                hover:file:bg-red-100 dark:hover:file:bg-red-800"
-                              required={!galleryFormData.imageUrl}
-                            />
-                            {galleryImagePreview && (
-                              <div className="mt-3">
-                                <img
-                                  src={galleryImagePreview}
-                                  alt="Preview"
-                                  className="max-w-xs max-h-32 object-cover rounded-md border"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <input
-                            type="url"
-                            value={galleryFormData.imageUrl}
-                            onChange={(e) =>
-                              setGalleryFormData((prev) => ({
-                                ...prev,
-                                imageUrl: e.target.value,
-                              }))
-                            }
-                            placeholder="https://..."
-                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-red-500 focus:ring-red-500"
-                            required={!gallerySelectedFile}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowGalleryForm(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
-                      {editingGalleryItem ? "Update" : "Create"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Gallery Items Table */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
-                  Gallery Items
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {galleryItems.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {item.title}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                            {item.description}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              item.type === "photo"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                            }`}
-                          >
-                            {item.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                            {item.category === "field"
-                              ? "Field Operations"
-                              : item.category === "product"
-                              ? "Product Showcase"
-                              : "Training"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleEditGalleryItem(item)}
-                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteGalleryItem(item.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    Simpan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </form>
             </div>
-          </>
-        ) : null}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

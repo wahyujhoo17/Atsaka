@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GalleryGrid from "../components/gallery/GalleryGrid";
-import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import { GalleryItem } from "../types";
 
 const GalleryPage: React.FC = () => {
@@ -17,31 +17,26 @@ const GalleryPage: React.FC = () => {
   const fetchGalleryItems = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("gallery")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await api.getGallery();
 
       // Transform data to match GalleryItem interface
-      const transformedItems: GalleryItem[] = (data || []).map((item) => ({
+      const transformedItems: GalleryItem[] = (data || []).map((item: any) => ({
         id: item.id,
         title: item.title,
         description: item.description,
         type: item.type,
         url: item.url,
-        imageUrl: item.image_url,
+        imageUrl: item.imageUrl,
         category: item.category,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       }));
 
       setGalleryItems(transformedItems);
 
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(transformedItems.map((item) => item.category))
+        new Set(transformedItems.map((item) => item.category)),
       );
       setCategories(uniqueCategories);
     } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+import { api } from "../../lib/api";
 import { Product } from "../../types";
 import Button from "../common/Button";
 // Jika belum ada slugify, Anda bisa menggunakan library seperti 'slugify'
@@ -29,7 +29,7 @@ const ProductHighlight: React.FC = () => {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {
@@ -55,26 +55,22 @@ const ProductHighlight: React.FC = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(3);
+      const data = await api.getProducts();
 
-      if (error) throw error;
-
-      // Transform data to match Product interface
-      const transformedProducts: Product[] = (data || []).map((item) => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        category: item.category,
-        description: item.description || "",
-        features: item.features || [],
-        imageUrl: item.image_url || "",
-        imageUrls: item.image_urls || [],
-        specifications: item.specifications || {},
-      }));
+      // Transform data to match Product interface and get first 3
+      const transformedProducts: Product[] = (data || [])
+        .slice(0, 3)
+        .map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          category: item.category,
+          description: item.description || "",
+          features: item.features || [],
+          imageUrl: item.imageUrl || "",
+          imageUrls: item.imageUrls || [],
+          specifications: item.specifications || {},
+        }));
 
       setFeaturedProducts(transformedProducts);
     } catch (error) {
@@ -166,8 +162,8 @@ const ProductHighlight: React.FC = () => {
                     {product.category === "pump"
                       ? "Pompa Kebakaran"
                       : product.category === "equipment"
-                      ? "Peralatan"
-                      : "Aksesori"}
+                        ? "Peralatan"
+                        : "Aksesori"}
                   </span>
                   <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white mt-2">
                     {product.name}

@@ -3,16 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { PackageSearch, ChevronUp, Sparkles, TrendingUp } from "lucide-react";
 import ProductFilter from "../components/products/ProductFilter";
 import ProductCard from "../components/products/ProductCard";
-import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import { Product, Category } from "../types";
 
 const ProductsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    searchParams.get("category")
+    searchParams.get("category"),
   );
   const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -29,23 +29,18 @@ const ProductsPage: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await api.getProducts();
 
       // Transform data to match Product interface
-      const transformedProducts: Product[] = (data || []).map((item) => ({
+      const transformedProducts: Product[] = (data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         slug: item.slug,
         category: item.category,
         description: item.description || "",
         features: item.features || [],
-        imageUrl: item.image_url || "",
-        imageUrls: item.image_urls || [],
+        imageUrl: item.imageUrl || "",
+        imageUrls: item.imageUrls || [],
         specifications: item.specifications || {},
       }));
 
@@ -59,12 +54,7 @@ const ProductsPage: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
+      const data = await api.getCategories();
       setCategories(data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -76,11 +66,27 @@ const ProductsPage: React.FC = () => {
     return category ? category.name : slug;
   };
 
+  // Get all category slugs including children for filtering
+  const getCategoryAndChildrenSlugs = (categorySlug: string): string[] => {
+    const category = categories.find((cat) => cat.slug === categorySlug);
+    if (!category) return [categorySlug];
+
+    const slugs = [categorySlug];
+    if (category.children) {
+      category.children.forEach((child) => {
+        slugs.push(child.slug);
+      });
+    }
+
+    return slugs;
+  };
+
   const filteredProducts = products.filter((product) => {
-    // Category filter
+    // Category filter - include parent and all children
     const categoryMatch = selectedCategory
-      ? product.category?.toLowerCase().trim() ===
-        selectedCategory.toLowerCase().trim()
+      ? getCategoryAndChildrenSlugs(selectedCategory).includes(
+          product.category?.toLowerCase().trim(),
+        )
       : true;
 
     // Search filter
@@ -99,11 +105,15 @@ const ProductsPage: React.FC = () => {
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   // Calculate product counts per category
-  const productCounts = products.reduce((acc, product) => {
-    const category = product.category?.toLowerCase().trim() || "uncategorized";
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const productCounts = products.reduce(
+    (acc, product) => {
+      const category =
+        product.category?.toLowerCase().trim() || "uncategorized";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   useEffect(() => {
     const category = searchParams.get("category");
@@ -221,7 +231,7 @@ const ProductsPage: React.FC = () => {
           {/* Sidebar Filter */}
           <aside className="lg:w-80 lg:sticky lg:top-24 self-start shrink-0">
             <ProductFilter
-              categories={categories.map((cat) => cat.slug)}
+              categories={categories}
               selectedCategory={selectedCategory}
               onCategoryChange={handleCategoryChange}
               productCounts={productCounts}
@@ -358,18 +368,27 @@ const ProductsPage: React.FC = () => {
                 </h3>
 
                 <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
-                  Maaf, kami tidak dapat menemukan produk yang cocok dengan
-                  kategori{" "}
-                  <span className="font-semibold text-red-600 dark:text-red-400">
-                    '
-                    {selectedCategory === "pump"
-                      ? "Pompa Pemadam"
-                      : selectedCategory === "equipment"
-                      ? "Peralatan"
-                      : "Aksesoris"}
-                    '
-                  </span>
-                  . Silakan coba kategori lain atau tampilkan semua produk.
+                  {selectedCategory ? (
+                    <>
+                      Maaf, kami tidak dapat menemukan produk yang cocok dengan
+                      kategori{" "}
+                      <span className="font-semibold text-red-600 dark:text-red-400">
+                        '{getCategoryName(selectedCategory)}'
+                      </span>
+                      . Silakan coba kategori lain atau tampilkan semua produk.
+                    </>
+                  ) : searchQuery ? (
+                    <>
+                      Maaf, kami tidak dapat menemukan produk dengan kata kunci{" "}
+                      <span className="font-semibold text-red-600 dark:text-red-400">
+                        '{searchQuery}'
+                      </span>
+                      . Silakan coba kata kunci lain atau tampilkan semua
+                      produk.
+                    </>
+                  ) : (
+                    "Belum ada produk yang tersedia saat ini."
+                  )}
                 </p>
 
                 <button

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import { Lock, User } from "lucide-react";
 
 const AdminLoginPage: React.FC = () => {
@@ -16,18 +16,10 @@ const AdminLoginPage: React.FC = () => {
     setError("");
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else if (data.user) {
-        navigate("/admin");
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
+      await api.login(email, password);
+      navigate("/admin");
+    } catch (err: any) {
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }

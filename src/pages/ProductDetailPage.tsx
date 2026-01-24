@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
 import Button from "../components/common/Button";
-import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import { Product } from "../types";
 
 import "slick-carousel/slick/slick.css";
@@ -55,19 +55,10 @@ const ProductDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .eq("slug", productSlug)
-          .single();
+        const data = await api.getProductBySlug(productSlug);
 
-        if (error) {
-          if (error.code === "PGRST116") {
-            // No rows returned
-            setError("Product not found");
-          } else {
-            throw error;
-          }
+        if (!data) {
+          setError("Product not found");
         } else {
           // Transform data to match Product interface
           const transformedProduct: Product = {
@@ -77,8 +68,8 @@ const ProductDetailPage: React.FC = () => {
             category: data.category,
             description: data.description || "",
             features: data.features || [],
-            imageUrl: data.image_url || "",
-            imageUrls: data.image_urls || [],
+            imageUrl: data.imageUrl || "",
+            imageUrls: data.imageUrls || [],
             specifications: data.specifications || {},
           };
           setProduct(transformedProduct);
@@ -142,8 +133,8 @@ const ProductDetailPage: React.FC = () => {
     return product.imageUrls && product.imageUrls.length > 0
       ? product.imageUrls
       : product.imageUrl
-      ? [product.imageUrl]
-      : [];
+        ? [product.imageUrl]
+        : [];
   };
 
   const imageArray = getImageArray();
@@ -219,8 +210,8 @@ const ProductDetailPage: React.FC = () => {
                       {(product.imageUrls && product.imageUrls.length > 0
                         ? product.imageUrls
                         : product.imageUrl
-                        ? [product.imageUrl]
-                        : []
+                          ? [product.imageUrl]
+                          : []
                       ).map((url, index) => (
                         <div
                           key={`main-${index}`}
@@ -247,8 +238,8 @@ const ProductDetailPage: React.FC = () => {
                         {(product.imageUrls && product.imageUrls.length > 0
                           ? product.imageUrls
                           : product.imageUrl
-                          ? [product.imageUrl]
-                          : []
+                            ? [product.imageUrl]
+                            : []
                         ).map((url, index) => (
                           <div
                             key={`thumb-${index}`}
@@ -288,8 +279,8 @@ const ProductDetailPage: React.FC = () => {
                 {product.category === "pump"
                   ? "Pompa Kebakaran"
                   : product.category === "equipment"
-                  ? "Peralatan"
-                  : "Aksesori"}
+                    ? "Peralatan"
+                    : "Aksesori"}
               </span>
 
               <h1 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -349,7 +340,7 @@ const ProductDetailPage: React.FC = () => {
                           {value}
                         </span>
                       </li>
-                    )
+                    ),
                   )}
                 </ul>
               </div>

@@ -1,8 +1,25 @@
-import React from "react";
-import { Filter, X, Grid, Package, Wrench, Zap } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Filter,
+  X,
+  Grid,
+  Package,
+  Wrench,
+  Zap,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+  children?: Category[];
+}
 
 interface ProductFilterProps {
-  categories: string[];
+  categories: Category[];
   selectedCategory: string | null;
   onCategoryChange: (category: string | null) => void;
   productCounts: Record<string, number>;
@@ -14,6 +31,21 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
   onCategoryChange,
   productCounts,
 }) => {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleCategory = (slug: string) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(slug)) {
+        newSet.delete(slug);
+      } else {
+        newSet.add(slug);
+      }
+      return newSet;
+    });
+  };
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "pump":
@@ -38,6 +70,19 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
 
   const getCategoryCount = (category: string) => {
     return productCounts[category] || 0;
+  };
+
+  // Get total count for parent category (including all children)
+  const getTotalCategoryCount = (parentCategory: Category) => {
+    let total = productCounts[parentCategory.slug] || 0;
+
+    if (parentCategory.children) {
+      parentCategory.children.forEach((child) => {
+        total += productCounts[child.slug] || 0;
+      });
+    }
+
+    return total;
   };
 
   return (
@@ -120,55 +165,135 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
             </div>
           </button>
 
-          {/* Category Options */}
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => onCategoryChange(category)}
-              className={`w-full group flex items-center justify-between p-3 rounded-lg transition-all duration-300 ${
-                selectedCategory === category
-                  ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
-                  : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-1.5 rounded-md ${
-                    selectedCategory === category
-                      ? "bg-white/20"
-                      : "bg-gray-200 dark:bg-gray-600"
-                  }`}
-                >
-                  {getCategoryIcon(category)}
-                </div>
-                <div className="text-left">
-                  <span className="font-semibold block text-sm">
-                    {getCategoryLabel(category)}
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      selectedCategory === category
-                        ? "text-white/80"
-                        : "text-gray-500 dark:text-gray-400"
+          {/* Category Options - Only show parent categories */}
+          {categories
+            .filter((cat) => !cat.parentId)
+            .map((parentCategory) => (
+              <div key={parentCategory.slug} className="space-y-1">
+                {/* Parent Category */}
+                <div className="flex items-stretch gap-1">
+                  {/* Expand/Collapse Button */}
+                  {parentCategory.children &&
+                    parentCategory.children.length > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCategory(parentCategory.slug);
+                        }}
+                        className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        {expandedCategories.has(parentCategory.slug) ? (
+                          <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        )}
+                      </button>
+                    )}
+
+                  {/* Category Button */}
+                  <button
+                    onClick={() => onCategoryChange(parentCategory.slug)}
+                    className={`flex-1 group flex items-center justify-between p-3 rounded-lg transition-all duration-300 ${
+                      selectedCategory === parentCategory.slug
+                        ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
+                        : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
-                    {getCategoryCount(category)} produk
-                  </span>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-1.5 rounded-md ${
+                          selectedCategory === parentCategory.slug
+                            ? "bg-white/20"
+                            : "bg-gray-200 dark:bg-gray-600"
+                        }`}
+                      >
+                        {getCategoryIcon(parentCategory.slug)}
+                      </div>
+                      <div className="text-left">
+                        <span className="font-semibold block text-sm">
+                          {parentCategory.name}
+                        </span>
+                        <span
+                          className={`text-xs ${
+                            selectedCategory === parentCategory.slug
+                              ? "text-white/80"
+                              : "text-gray-500 dark:text-gray-400"
+                          }`}
+                        >
+                          {getTotalCategoryCount(parentCategory)} produk
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                        selectedCategory === parentCategory.slug
+                          ? "border-white bg-white"
+                          : "border-gray-300 dark:border-gray-500"
+                      }`}
+                    >
+                      {selectedCategory === parentCategory.slug && (
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                      )}
+                    </div>
+                  </button>
                 </div>
+
+                {/* Sub Categories - Only show when parent is expanded */}
+                {expandedCategories.has(parentCategory.slug) &&
+                  parentCategory.children && (
+                    <div className="ml-10 space-y-1">
+                      {parentCategory.children.map((subCategory) => (
+                        <button
+                          key={subCategory.slug}
+                          onClick={() => onCategoryChange(subCategory.slug)}
+                          className={`w-full group flex items-center justify-between p-3 rounded-lg transition-all duration-300 ${
+                            selectedCategory === subCategory.slug
+                              ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md"
+                              : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`p-1.5 rounded-md ${
+                                selectedCategory === subCategory.slug
+                                  ? "bg-white/20"
+                                  : "bg-gray-200 dark:bg-gray-600"
+                              }`}
+                            >
+                              {getCategoryIcon(subCategory.slug)}
+                            </div>
+                            <div className="text-left">
+                              <span className="font-semibold block text-sm">
+                                ↳ {subCategory.name}
+                              </span>
+                              <span
+                                className={`text-xs ${
+                                  selectedCategory === subCategory.slug
+                                    ? "text-white/80"
+                                    : "text-gray-500 dark:text-gray-400"
+                                }`}
+                              >
+                                {getCategoryCount(subCategory.slug)} produk
+                              </span>
+                            </div>
+                          </div>
+                          <div
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              selectedCategory === subCategory.slug
+                                ? "border-white bg-white"
+                                : "border-gray-300 dark:border-gray-500"
+                            }`}
+                          >
+                            {selectedCategory === subCategory.slug && (
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
-              <div
-                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                  selectedCategory === category
-                    ? "border-white bg-white"
-                    : "border-gray-300 dark:border-gray-500"
-                }`}
-              >
-                {selectedCategory === category && (
-                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                )}
-              </div>
-            </button>
-          ))}
+            ))}
         </div>
 
         {/* Additional Info */}
