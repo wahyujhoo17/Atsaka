@@ -11,6 +11,7 @@ import GalleryPage from "./pages/GalleryPage";
 import ContactPage from "./pages/ContactPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPage from "./pages/AdminPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   return (
@@ -102,6 +103,9 @@ function App() {
                 </>
               }
             />
+
+            {/* 404 - Catch all unknown routes */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
       </Router>
