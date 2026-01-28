@@ -19,7 +19,7 @@ const GalleryPage: React.FC = () => {
       setLoading(true);
       const data = await api.getGallery();
 
-      // Transform data to match GalleryItem interface
+      // Transform data to match GalleryItem interface (support both old `category` and new `categories`)
       const transformedItems: GalleryItem[] = (data || []).map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -27,7 +27,11 @@ const GalleryPage: React.FC = () => {
         type: item.type,
         url: item.url,
         imageUrl: item.imageUrl,
-        category: item.category,
+        categories: item.categories
+          ? (item.categories || []).map((c: string) => c.toLowerCase())
+          : item.category
+            ? [String(item.category).toLowerCase()]
+            : [],
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       }));
@@ -36,7 +40,7 @@ const GalleryPage: React.FC = () => {
 
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(transformedItems.map((item) => item.category)),
+        new Set(transformedItems.flatMap((item) => item.categories || [])),
       );
       setCategories(uniqueCategories);
     } catch (error) {

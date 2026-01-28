@@ -214,15 +214,15 @@ async function main() {
             "Demonstrasi penggunaan alat pemadam kebakaran di area hutan",
           type: "video",
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          category: "product",
+          categories: ["product"],
         },
         {
           title: "Tim Rescue ATS",
           description: "Tim rescue ATS dalam aksi penyelamatan",
-          type: "photo",
+          type: "image",
           imageUrl:
             "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800",
-          category: "training",
+          categories: ["training"],
         },
         {
           title: "Pelatihan Pemadam Kebakaran",
@@ -230,30 +230,30 @@ async function main() {
             "Sesi pelatihan intensif untuk anggota pemadam kebakaran",
           type: "video",
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          category: "training",
+          categories: ["training"],
         },
         {
           title: "Equipment Showcase",
           description: "Koleksi peralatan pemadam kebakaran ATS lengkap",
-          type: "photo",
+          type: "image",
           imageUrl:
             "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=800",
-          category: "product",
+          categories: ["product"],
         },
         {
           title: "Simulasi Kebakaran",
           description: "Latihan simulasi penanganan kebakaran hutan",
           type: "video",
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          category: "training",
+          categories: ["training"],
         },
         {
           title: "Base Camp Operation",
           description: "Operasi base camp dalam penanganan kebakaran besar",
-          type: "photo",
+          type: "image",
           imageUrl:
             "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-          category: "field",
+          categories: ["field"],
         },
       ],
     });

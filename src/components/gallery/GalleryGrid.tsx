@@ -47,6 +47,13 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
   selectedCategory,
   onCategoryChange,
 }) => {
+  const getCategoryLabel = (category: string) => {
+    if (category === "field") return "Field Operations";
+    if (category === "product") return "Product Showcase";
+    if (category === "training") return "Training";
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -63,7 +70,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
   }, [selectedItem]);
 
   const filteredItems = selectedCategory
-    ? items.filter((item) => item.category === selectedCategory)
+    ? items.filter((item) => (item.categories || []).includes(selectedCategory))
     : items;
 
   const openModal = (item: GalleryItem) => {
@@ -111,11 +118,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
-            {category === "field"
-              ? "Field Operations"
-              : category === "product"
-              ? "Product Showcase"
-              : "Training"}
+            {getCategoryLabel(category)}
           </button>
         ))}
       </div>
@@ -169,6 +172,16 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
                 <h3 className="text-white font-semibold text-sm truncate">
                   {item.title}
                 </h3>
+                <div className="mt-1 flex gap-2 flex-wrap">
+                  {(item.categories || []).slice(0, 3).map((c) => (
+                    <span
+                      key={c}
+                      className="text-xs px-2 py-1 bg-black/40 rounded text-white"
+                    >
+                      {getCategoryLabel(c)}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -217,7 +230,17 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({
             <div className="p-4 md:p-6 flex-shrink-0">
               <h3 className="text-xl md:text-2xl font-bold mb-2 text-gray-900 dark:text-white">
                 {selectedItem.title}
-              </h3>
+              </h3>{" "}
+              <div className="mb-2 flex gap-2 flex-wrap">
+                {(selectedItem.categories || []).map((c) => (
+                  <span
+                    key={c}
+                    className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-800 dark:text-gray-200"
+                  >
+                    {getCategoryLabel(c)}
+                  </span>
+                ))}
+              </div>{" "}
               <p className="text-gray-700 dark:text-gray-300 text-sm md:text-base">
                 {selectedItem.description}
               </p>

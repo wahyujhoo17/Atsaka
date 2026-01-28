@@ -22,10 +22,10 @@ export interface GalleryItem {
   id: string;
   title: string;
   description?: string;
-  type: "photo" | "video";
+  type: "image" | "video";
   url?: string; // For video links
   imageUrl?: string; // For uploaded photos
-  category: string;
+  categories: string[];
   createdAt?: string;
   updatedAt?: string;
 }

@@ -80,7 +80,7 @@ Kimia Laboratorium (Parent)
 
 1. Klik tab "Gallery"
 2. Klik tombol "Tambah Gallery Item"
-3. Isi data gambar/video gallery
+3. Isi data gambar/video gallery. Untuk kategori, Anda dapat memilih beberapa kategori dari dropdown atau mengetik kategori baru (tekan Enter untuk menambahkan).
 
 ## Tips
 

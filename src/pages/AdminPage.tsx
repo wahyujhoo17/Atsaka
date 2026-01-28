@@ -15,6 +15,7 @@ import {
   Upload,
   Loader,
 } from "lucide-react";
+import { galleryCategories } from "../data/galleryCategories";
 
 interface Product {
   id: string;
@@ -46,7 +47,7 @@ interface GalleryItem {
   type: string;
   url?: string;
   imageUrl?: string;
-  category: string;
+  categories: string[];
 }
 
 const AdminPage: React.FC = () => {
@@ -64,6 +65,8 @@ const AdminPage: React.FC = () => {
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
+  const [newCategoryInput, setNewCategoryInput] = useState("");
+  const [selectCategoryValue, setSelectCategoryValue] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingMultiple, setUploadingMultiple] = useState(false);
   const navigate = useNavigate();
@@ -99,7 +102,16 @@ const AdminPage: React.FC = () => {
         setCategories(data);
       } else if (activeTab === "gallery") {
         const data = await api.getGallery();
-        setGallery(data);
+        // Normalize categories for backward compatibility
+        const normalized = (data || []).map((item: any) => ({
+          ...item,
+          categories: item.categories
+            ? item.categories
+            : item.category
+              ? [item.category]
+              : [],
+        }));
+        setGallery(normalized);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -142,10 +154,13 @@ const AdminPage: React.FC = () => {
       setFormData({
         title: "",
         description: "",
-        type: "photo",
+        type: "image",
         url: "",
         imageUrl: "",
-        category: "general",
+        categories:
+          galleryCategories && galleryCategories.length > 0
+            ? [galleryCategories[0].slug]
+            : ["general"],
       });
     }
     setShowModal(true);
@@ -153,7 +168,12 @@ const AdminPage: React.FC = () => {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    setFormData({ ...item });
+    const normalizedCategories = item.categories
+      ? item.categories
+      : item.category
+        ? [item.category]
+        : [];
+    setFormData({ ...item, categories: normalizedCategories });
     setFeatureInput("");
     setImageUrlInput("");
     setSpecKey("");
@@ -266,7 +286,27 @@ const AdminPage: React.FC = () => {
       } else if (activeTab === "categories") {
         await api.createCategory(formData);
       } else if (activeTab === "gallery") {
-        await api.createGalleryItem(formData);
+        if (
+          !formData.categories ||
+          !Array.isArray(formData.categories) ||
+          formData.categories.length === 0
+        ) {
+          toast.error("Pilih minimal satu kategori gallery", {
+            duration: 3000,
+            position: "top-right",
+            style: { background: "#ef4444", color: "#fff", fontWeight: "500" },
+          });
+          return;
+        }
+        // Normalize categories to lowercase slugs
+        formData.categories = (formData.categories || []).map((c: string) =>
+          String(c).toLowerCase(),
+        );
+        if (editingItem) {
+          await api.updateGalleryItem(editingItem.id, formData);
+        } else {
+          await api.createGalleryItem(formData);
+        }
       }
 
       toast.success(
@@ -634,14 +674,22 @@ const AdminPage: React.FC = () => {
                       </p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 dark:text-gray-500">
-                          {item.type} • {item.category}
+                          {item.type} • {(item.categories || []).join(", ")}
                         </span>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1249,7 +1297,10 @@ const AdminPage: React.FC = () => {
                             accept="image/*"
                             className="hidden"
                             disabled={uploadingImage}
-                            onChange={handleImageUpload}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file);
+                            }}
                           />
                         </label>
 
@@ -1330,13 +1381,13 @@ const AdminPage: React.FC = () => {
                       </label>
                       <select
                         required
-                        value={formData.type || "photo"}
+                        value={formData.type || "image"}
                         onChange={(e) =>
                           setFormData({ ...formData, type: e.target.value })
                         }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
-                        <option value="photo">Photo</option>
+                        <option value="image">Image</option>
                         <option value="video">Video</option>
                       </select>
                     </div>
@@ -1347,7 +1398,7 @@ const AdminPage: React.FC = () => {
                           : "Gallery Image"}
                       </label>
 
-                      {formData.type === "photo" && (
+                      {formData.type === "image" && (
                         <>
                           {/* Image Preview */}
                           {formData.imageUrl && (
@@ -1390,7 +1441,10 @@ const AdminPage: React.FC = () => {
                                 accept="image/*"
                                 className="hidden"
                                 disabled={uploadingImage}
-                                onChange={handleImageUpload}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(file);
+                                }}
                               />
                             </label>
 
@@ -1445,16 +1499,111 @@ const AdminPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Category
+                        Categories
                       </label>
-                      <input
-                        type="text"
-                        value={formData.category || "general"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
+
+                      {/* Selected categories chips */}
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {(formData.categories || []).map((cat: string) => (
+                          <div
+                            key={cat}
+                            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full"
+                          >
+                            <span className="text-sm text-gray-700 dark:text-gray-200">
+                              {galleryCategories.find((c) => c.slug === cat)
+                                ?.name || cat}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  categories: formData.categories.filter(
+                                    (c: string) => c !== cat,
+                                  ),
+                                })
+                              }
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-2">
+                        {/* Dropdown to add from predefined galleryCategories */}
+                        <select
+                          value={selectCategoryValue}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectCategoryValue("");
+                            if (!v) return;
+                            const current = formData.categories || [];
+                            if (!current.includes(v)) {
+                              setFormData({
+                                ...formData,
+                                categories: [...current, v],
+                              });
+                            }
+                          }}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        >
+                          <option value="">Tambah dari daftar...</option>
+                          {galleryCategories.map((cat) => (
+                            <option key={cat.slug} value={cat.slug}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Input to add custom category */}
+                        <input
+                          type="text"
+                          value={newCategoryInput}
+                          onChange={(e) => setNewCategoryInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const v = newCategoryInput.trim().toLowerCase();
+                              if (!v) return;
+                              const current = formData.categories || [];
+                              if (!current.includes(v)) {
+                                setFormData({
+                                  ...formData,
+                                  categories: [...current, v],
+                                });
+                              }
+                              setNewCategoryInput("");
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          placeholder="Ketik kategori baru lalu tekan Enter"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const v = newCategoryInput.trim().toLowerCase();
+                            if (!v) return;
+                            const current = formData.categories || [];
+                            if (!current.includes(v)) {
+                              setFormData({
+                                ...formData,
+                                categories: [...current, v],
+                              });
+                            }
+                            setNewCategoryInput("");
+                          }}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Pilih atau tambahkan beberapa kategori. Tekan Enter
+                        untuk menambah kategori kustom.
+                      </p>
                     </div>
                   </>
                 )}

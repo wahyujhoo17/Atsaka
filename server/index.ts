@@ -488,7 +488,7 @@ app.get("/api/gallery", async (req: Request, res: Response) => {
     const gallery = await prisma.gallery.findMany({
       where: {
         ...(type && { type: type as string }),
-        ...(category && { category: category as string }),
+        ...(category && { categories: { has: category as string } }),
       },
       orderBy: { createdAt: "desc" },
     });
@@ -511,6 +511,23 @@ app.post("/api/gallery", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error creating gallery item:", error);
     res.status(500).json({ error: "Failed to create gallery item" });
+  }
+});
+
+// Update gallery item
+app.put("/api/gallery/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const gallery = await prisma.gallery.update({
+      where: { id },
+      data: req.body,
+    });
+
+    res.json(gallery);
+  } catch (error) {
+    console.error("Error updating gallery item:", error);
+    res.status(500).json({ error: "Failed to update gallery item" });
   }
 });
 

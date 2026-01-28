@@ -48,12 +48,11 @@ model Gallery {
   type        String
   url         String?
   imageUrl    String?  @map("image_url")
-  category    String   @default("general")
+  categories  String[] @default([])
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([type])
-  @@index([category])
   @@map("gallery")
 }
 

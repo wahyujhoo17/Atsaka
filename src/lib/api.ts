@@ -221,6 +221,20 @@ export const api = {
     return response.json();
   },
 
+  async updateGalleryItem(id: string, data: any) {
+    const response = await fetch(`${API_BASE_URL}/gallery/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update gallery item");
+    }
+
+    return response.json();
+  },
+
   // Image Upload
   async uploadImage(file: File) {
     const formData = new FormData();
