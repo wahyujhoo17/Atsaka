@@ -14,25 +14,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "pump":
-        return "Pompa Pemadam";
-      case "equipment":
-        return "Peralatan";
-      default:
-        return "Aksesoris";
-    }
+    if (!category) return "Produk";
+    
+    // Ganti tanda hubung dengan spasi
+    const withSpaces = category.replace(/-/g, ' ');
+    
+    // Kapitalisasi setiap kata
+    return withSpaces
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "pump":
-        return "bg-blue-600/95 border border-blue-400/50";
-      case "equipment":
-        return "bg-emerald-600/95 border border-emerald-400/50";
-      default:
-        return "bg-purple-600/95 border border-purple-400/50";
+    // Warna konsisten berdasarkan kategori
+    const colorMap: Record<string, string> = {
+      "pump": "bg-blue-600/95 border border-blue-400/50",
+      "equipment": "bg-emerald-600/95 border border-emerald-400/50",
+      "aksesori": "bg-purple-600/95 border border-purple-400/50",
+      "accessory": "bg-purple-600/95 border border-purple-400/50",
+      "fire-extinguisher": "bg-red-600/95 border border-red-400/50",
+      "nozzle": "bg-amber-600/95 border border-amber-400/50",
+      "hose": "bg-cyan-600/95 border border-cyan-400/50",
+      "valve": "bg-indigo-600/95 border border-indigo-400/50",
+      "tools": "bg-emerald-600/95 border border-emerald-400/50",
+      "safety": "bg-green-600/95 border border-green-400/50"
+    };
+    
+    const lowerCategory = category.toLowerCase();
+    if (colorMap[lowerCategory]) {
+      return colorMap[lowerCategory];
     }
+    
+    // Default color for unknown categories
+    return "bg-gray-600/95 border border-gray-400/50";
   };
 
   return (

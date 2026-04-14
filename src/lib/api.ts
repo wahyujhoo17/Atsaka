@@ -99,7 +99,8 @@ export const api = {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to create product");
+      const error = await response.json();
+      throw new Error(error.error || "Failed to create product");
     }
 
     return response.json();
@@ -108,12 +109,13 @@ export const api = {
   async updateProduct(id: string, data: any) {
     const response = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to update product");
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update product");
     }
 
     return response.json();

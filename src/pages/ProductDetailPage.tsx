@@ -43,6 +43,20 @@ const ProductDetailPage: React.FC = () => {
   const slider1Ref = useRef<Slider>(null);
   const slider2Ref = useRef<Slider>(null);
 
+  const getCategoryLabel = (category: string) => {
+    if (!category) return "Produk";
+    
+    // Ganti tanda hubung dengan spasi
+    const withSpaces = category.replace(/-/g, ' ');
+    
+    // Kapitalisasi setiap kata
+    return withSpaces
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productSlug) {
@@ -276,11 +290,7 @@ const ProductDetailPage: React.FC = () => {
 
             <div className="lg:col-span-3 p-5 sm:p-6 lg:p-8 border-l border-gray-100 dark:border-gray-700/50">
               <span className="inline-block bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full mb-3">
-                {product.category === "pump"
-                  ? "Pompa Kebakaran"
-                  : product.category === "equipment"
-                    ? "Peralatan"
-                    : "Aksesori"}
+                {getCategoryLabel(product.category)}
               </span>
 
               <h1 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900 dark:text-white">

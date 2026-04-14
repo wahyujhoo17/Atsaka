@@ -168,12 +168,23 @@ const AdminPage: React.FC = () => {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    const normalizedCategories = item.categories
-      ? item.categories
-      : item.category
-        ? [item.category]
-        : [];
-    setFormData({ ...item, categories: normalizedCategories });
+    
+    if (activeTab === "gallery") {
+      const normalizedCategories = item.categories
+        ? item.categories
+        : item.category
+          ? [item.category]
+          : [];
+      setFormData({ ...item, categories: normalizedCategories });
+    } else if (activeTab === "products") {
+      // Hanya ambil field yang sesuai dengan skema Product
+      const { categories, ...productData } = item;
+      setFormData({ ...productData });
+    } else {
+      // Untuk categories, langsung copy item
+      setFormData({ ...item });
+    }
+    
     setFeatureInput("");
     setImageUrlInput("");
     setSpecKey("");
