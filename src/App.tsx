@@ -6,12 +6,13 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
-import AboutPage from "./pages/AboutPage";
 import GalleryPage from "./pages/GalleryPage";
 import ContactPage from "./pages/ContactPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ArticlesPage from "./pages/ArticlesPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 
 function App() {
   return (
@@ -68,18 +69,6 @@ function App() {
               }
             />
             <Route
-              path="/about"
-              element={
-                <>
-                  <Navbar />
-                  <main className="flex-grow">
-                    <AboutPage />
-                  </main>
-                  <Footer />
-                </>
-              }
-            />
-            <Route
               path="/gallery"
               element={
                 <>
@@ -98,6 +87,30 @@ function App() {
                   <Navbar />
                   <main className="flex-grow">
                     <ContactPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/articles"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <ArticlesPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/articles/:slug"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <ArticleDetailPage />
                   </main>
                   <Footer />
                 </>

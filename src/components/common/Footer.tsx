@@ -13,200 +13,91 @@ import {
 const Footer: React.FC = () => {
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Info Perusahaan */}
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <img src="/img/logo.png" className="w-8 h-8" alt="ATSAKA Logo" />
-              <span className="text-xl font-bold">ATSAKA</span>
-            </div>
-            <p className="text-gray-400 mb-4">
-              Divisi unggulan dari PT. Sinar Surya Semestaraya yang menyediakan
-              solusi pemadam kebakaran hutan berkualitas tinggi.
+      <div className="container mx-auto px-4 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+          {/* Brand Column */}
+          <div className="space-y-6">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <img
+                src="/img/logo.png"
+                alt="ATSAKA Logo"
+                className="w-10 h-10 transition-transform duration-300 group-hover:scale-110"
+              />
+              <span className="text-2xl font-semibold tracking-tight text-white">ATSAKA</span>
+            </Link>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Divisi unggulan dari PT. Sinar Surya Semestaraya yang menyediakan solusi pemadam kebakaran hutan berkualitas tinggi.
             </p>
             <div className="flex space-x-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-red-500 transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook size={20} />
+              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
+                <Facebook size={16} />
               </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-red-500 transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram size={20} />
+              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
+                <Instagram size={16} />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-red-500 transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter size={20} />
+              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
+                <Twitter size={16} />
               </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-red-500 transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={20} />
+              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
+                <Linkedin size={16} />
               </a>
             </div>
           </div>
 
-          {/* Tautan Cepat */}
+          {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Tautan Cepat</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Beranda
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Produk
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Tentang Kami
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/gallery"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Galeri
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Kontak
-                </Link>
-              </li>
+            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Tautan Cepat</h4>
+            <ul className="space-y-3">
+              <li><Link to="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Beranda</Link></li>
+              <li><Link to="/products" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Produk</Link></li>
+              <li><Link to="/#about" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Tentang Kami</Link></li>
+              <li><Link to="/gallery" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Galeri</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Kontak</Link></li>
             </ul>
           </div>
 
-          {/* Produk Kami */}
+          {/* Products Column */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Produk Kami</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/products?category=pump"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Pompa Pemadam
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products?category=equipment"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Peralatan Pemadam
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products?category=accessory"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Aksesoris & Suku Cadang
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/services"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Layanan Perawatan
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/training"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Program Pelatihan
-                </Link>
-              </li>
+            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Produk Kami</h4>
+            <ul className="space-y-3">
+              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Pompa Pemadam</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Peralatan Pemadam</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Aksesoris & Suku Cadang</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Layanan Perawatan</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Program Pelatihan</a></li>
             </ul>
           </div>
 
-          {/* Hubungi Kami */}
+          {/* Contact Column */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Hubungi Kami</h3>
+            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Hubungi Kami</h4>
             <ul className="space-y-4">
               <li className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">
-                  Jl Raya Condet No 6 , Balekambang, Kramat jati Kota Adm
-                  Jakarta Timur DKI Jakarta 13530
+                <span className="text-gray-400 text-sm leading-relaxed">
+                  Jl Raya Condet No 9, Balekambang, Kramat Jati Kota Adm Jakarta Timur DKI Jakarta 13530
                 </span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <span className="text-gray-400">+62 8176454312</span>
+                <span className="text-gray-400 text-sm">+62 8176454312</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <a
-                  href="mailto:info@atsaka.co.id"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  sales@kliksinarsurya.com
-                </a>
+                <span className="text-gray-400 text-sm">sales@kliksinarsurya.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 mt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-500 text-sm mb-4 md:mb-0">
-              &copy; {new Date().getFullYear()} ATSAKA - PT. Sinar Surya
-              Semestaraya. Hak cipta dilindungi undang-undang.
-            </p>
-            <div className="flex space-x-6">
-              <Link
-                to="/privacy"
-                className="text-gray-500 text-sm hover:text-red-500 transition-colors"
-              >
-                Kebijakan Privasi
-              </Link>
-              <Link
-                to="/terms"
-                className="text-gray-500 text-sm hover:text-red-500 transition-colors"
-              >
-                Ketentuan Layanan
-              </Link>
-            </div>
+        {/* Footer Bottom */}
+        <div className="mt-16 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <p className="text-gray-500 text-xs">
+            © {new Date().getFullYear()} ATSAKA - PT. Sinar Surya Semestaraya. Hak cipta dilindungi undang-undang.
+          </p>
+          <div className="flex space-x-6 text-xs">
+            <Link to="#" className="text-gray-500 hover:text-white transition-colors">Kebijakan Privasi</Link>
+            <Link to="#" className="text-gray-500 hover:text-white transition-colors">Ketentuan Layanan</Link>
           </div>
         </div>
       </div>

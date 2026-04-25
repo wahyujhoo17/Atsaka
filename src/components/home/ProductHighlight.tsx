@@ -1,192 +1,133 @@
-import React, { useRef, useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { api } from "../../lib/api";
-import { Product } from "../../types";
-import Button from "../common/Button";
-// Jika belum ada slugify, Anda bisa menggunakan library seperti 'slugify'
-// import slugify from 'slugify'; // Contoh jika menggunakan library
-// Atau buat fungsi slugify sederhana jika diperlukan
-// const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+import React, { useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+const categories = [
+  {
+    id: 'fire-pump',
+    title: 'FIRE PUMP',
+    imageUrl: '/img/products/fire-pump-removebg-preview.png',
+    fallbackUrl: 'https://images.pexels.com/photos/2684219/pexels-photo-2684219.jpeg',
+    category: 'pump',
+  },
+  {
+    id: 'baju-pemadam',
+    title: 'BAJU PEMADAM',
+    imageUrl: '/img/products/baju-pemadam-removebg-preview.png',
+    fallbackUrl: 'https://images.pexels.com/photos/5765182/pexels-photo-5765182.jpeg',
+    category: 'equipment',
+  },
+  {
+    id: 'peralatan-tangan',
+    title: 'PERALATAN TANGAN',
+    imageUrl: '/img/products/peralatan-tangan-removebg-preview.png',
+    fallbackUrl: 'https://images.pexels.com/photos/209235/pexels-photo-209235.jpeg',
+    category: 'equipment',
+  },
+  {
+    id: 'aksesoris',
+    title: 'AKSESORIS',
+    imageUrl: '/img/products/aksesoris-removebg-preview.png',
+    fallbackUrl: 'https://images.pexels.com/photos/210881/pexels-photo-210881.jpeg',
+    category: 'accessory',
+  },
+];
 
 const ProductHighlight: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const productRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchFeaturedProducts();
-  }, []);
+  const cardRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("animate-in");
+            entry.target.classList.add('animate-in');
           }
         });
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    productRefs.current.forEach((product) => {
-      if (product) observer.observe(product);
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    cardRefs.current.forEach((card) => {
+      if (card) observer.observe(card);
     });
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-
-      productRefs.current.forEach((product) => {
-        if (product) observer.unobserve(product);
+      if (sectionRef.current) observer.unobserve(sectionRef.current);
+      cardRefs.current.forEach((card) => {
+        if (card) observer.unobserve(card);
       });
     };
-  }, [featuredProducts]);
-
-  const fetchFeaturedProducts = async () => {
-    try {
-      setLoading(true);
-
-      const data = await api.getProducts();
-
-      // Transform data to match Product interface and get first 3
-      const transformedProducts: Product[] = (data || [])
-        .slice(0, 3)
-        .map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          slug: item.slug,
-          category: item.category,
-          description: item.description || "",
-          features: item.features || [],
-          imageUrl: item.imageUrl || "",
-          imageUrls: item.imageUrls || [],
-          specifications: item.specifications || {},
-        }));
-
-      setFeaturedProducts(transformedProducts);
-    } catch (error) {
-      console.error("Error fetching featured products:", error);
-      setError("Gagal memuat produk unggulan");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="py-20 bg-gray-50 dark:bg-gray-900 transition-opacity opacity-0 duration-1000 ease-in-out"
+      className="py-24 bg-[#232323] opacity-0 transition-opacity duration-1000 ease-in-out relative"
     >
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-16">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-              Produk Unggulan
-            </h2>
-            <div className="w-16 h-1 bg-red-500 mb-6"></div>
-            <p className="text-gray-600 dark:text-gray-300 text-lg max-w-xl">
-              Temukan peralatan pemadam kebakaran inovatif kami yang dirancang
-              khusus untuk lingkungan hutan.
-            </p>
+      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#E5252A] mb-4 tracking-wider uppercase">
+            Produk Kami
+          </h2>
+
+          {/* Decorative Divider */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="h-[1px] w-12 bg-gray-500"></div>
+            <div className="w-2.5 h-2.5 bg-white"></div>
+            <div className="h-[1px] w-12 bg-gray-500"></div>
           </div>
 
-          <Link
-            to="/products"
-            className="mt-6 md:mt-0 group flex items-center text-red-500 font-medium hover:text-red-600 transition-colors"
-          >
-            Lihat Semua Produk
-            <ArrowRight
-              className="ml-2 group-hover:translate-x-1 transition-transform"
-              size={20}
-            />
-          </Link>
+          {/* Subtitle */}
+          <p className="text-gray-300 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
+            ATSAKA menawarkan jajaran lengkap pompa kebakaran portabel sentrifugal tekanan tinggi dan komponen yang cocok untuk memenuhi persyaratan penanganan air yang paling sulit di lapangan.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {loading ? (
-            // Loading skeleton
-            Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                ref={(el) => (productRefs.current[index] = el)}
-                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md animate-pulse"
-              >
-                <div className="h-64 bg-gray-300 dark:bg-gray-700"></div>
-                <div className="p-6">
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-3"></div>
-                  <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded mb-3"></div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-6 w-3/4"></div>
-                  <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded"></div>
-                </div>
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10 mb-20">
+          {categories.map((item, index) => (
+            <Link
+              key={item.id}
+              to={`/products?category=${item.category}`}
+              ref={(el) => (cardRefs.current[index] = el)}
+              className="group flex flex-col items-center justify-between opacity-0 translate-y-8 transition-all duration-700 hover:-translate-y-2"
+              style={{ transitionDelay: `${index * 150}ms` }}
+            >
+              {/* Product Image */}
+              <div className="w-full aspect-square flex items-center justify-center mb-6">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110 drop-shadow-2xl"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Fallback to placeholder if transparent image is missing
+                    (e.target as HTMLImageElement).src = item.fallbackUrl;
+                    (e.target as HTMLImageElement).className = "w-full h-full object-cover rounded-xl opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all";
+                  }}
+                />
               </div>
-            ))
-          ) : error ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
-              <button
-                onClick={fetchFeaturedProducts}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Coba Lagi
-              </button>
-            </div>
-          ) : featuredProducts.length > 0 ? (
-            featuredProducts.map((product: Product, index: number) => (
-              <div
-                key={product.id}
-                ref={(el) => (productRefs.current[index] = el)}
-                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md transform transition-all duration-500 opacity-0 translate-y-12 hover:shadow-lg group"
-                style={{ transitionDelay: `${index * 150}ms` }}
-              >
-                <div className="h-64 overflow-hidden">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
 
-                <div className="p-6">
-                  <span className="text-sm font-medium text-blue-500 uppercase tracking-wider">
-                    {product.category === "pump"
-                      ? "Pompa Kebakaran"
-                      : product.category === "equipment"
-                        ? "Peralatan"
-                        : "Aksesori"}
-                  </span>
-                  <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white mt-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-2">
-                    {product.description}
-                  </p>
+              {/* Product Title */}
+              <h3 className="text-[#E5252A] font-bold text-base md:text-lg text-center uppercase tracking-widest group-hover:text-red-400 transition-colors">
+                {item.title}
+              </h3>
+            </Link>
+          ))}
+        </div>
 
-                  <Link to={`/products/${product.slug}`}>
-                    <Button variant="outline" className="w-full">
-                      Lihat Detail
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
-                Belum ada produk unggulan
-              </p>
-            </div>
-          )}
+        {/* CTA Button */}
+        <div className="flex justify-center">
+          <Link
+            to="/products"
+            className="bg-[#E5252A] hover:bg-red-700 text-white font-bold py-3.5 px-8 rounded-full uppercase tracking-wider text-sm transition-all shadow-lg hover:shadow-red-600/30 hover:scale-105"
+          >
+            Temukan Produk Yang Tepat
+          </Link>
         </div>
       </div>
     </section>

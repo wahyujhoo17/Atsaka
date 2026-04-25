@@ -24,9 +24,10 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: "Beranda", path: "/" },
     { name: "Produk", path: "/products" },
-    { name: "Tentang Kami", path: "/about" },
+    { name: "Tentang Kami", path: "/#about" },
     { name: "Galeri", path: "/gallery" },
-    { name: "Contact", path: "/contact" },
+    { name: "Artikel", path: "/articles" },
+    { name: "Kontak", path: "/contact" },
   ];
 
   const baseLinkClasses =
@@ -105,16 +106,39 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-7 lg:space-x-9">
-          {navLinks.map((link) => (
-            <NavLink
-              key={link.name}
-              to={link.path}
-              className={getLinkClassName} // Use the function to get classes
-              end={link.path === "/"} // Ensure exact match for homepage
-            >
-              {link.name}
-            </NavLink>
-          ))}
+          {navLinks.map((link) => {
+            const isHashLink = link.path.startsWith('/#');
+            return isHashLink ? (
+              <a
+                key={link.name}
+                href={link.path}
+                className={getLinkClassName({ isActive: false })}
+                onClick={(e) => {
+                  if (location.pathname === '/') {
+                    e.preventDefault();
+                    const targetId = link.path.substring(2);
+                    const element = document.getElementById(targetId);
+                    if (element) {
+                      const top = element.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                      window.history.pushState(null, '', link.path);
+                    }
+                  }
+                }}
+              >
+                {link.name}
+              </a>
+            ) : (
+              <NavLink
+                key={link.name}
+                to={link.path}
+                className={getLinkClassName}
+                end={link.path === "/"}
+              >
+                {link.name}
+              </NavLink>
+            );
+          })}
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
@@ -183,23 +207,47 @@ const Navbar: React.FC = () => {
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col space-y-1">
-          {navLinks.map((link) => (
-            <NavLink
-              key={`mobile-${link.name}`}
-              to={link.path}
-              className={({ isActive }) =>
-                `block px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
-                  isActive
-                    ? "bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
-                }`
-              }
-              onClick={() => setIsMenuOpen(false)} // Close menu on click
-              end={link.path === "/"} // Ensure exact match for homepage
-            >
-              {link.name}
-            </NavLink>
-          ))}
+          {navLinks.map((link) => {
+            const isHashLink = link.path.startsWith('/#');
+            return isHashLink ? (
+              <a
+                key={`mobile-${link.name}`}
+                href={link.path}
+                className="block px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
+                onClick={(e) => {
+                  setIsMenuOpen(false);
+                  if (location.pathname === '/') {
+                    e.preventDefault();
+                    const targetId = link.path.substring(2);
+                    const element = document.getElementById(targetId);
+                    if (element) {
+                      const top = element.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                      window.history.pushState(null, '', link.path);
+                    }
+                  }
+                }}
+              >
+                {link.name}
+              </a>
+            ) : (
+              <NavLink
+                key={`mobile-${link.name}`}
+                to={link.path}
+                className={({ isActive }) =>
+                  `block px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
+                    isActive
+                      ? "bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
+                  }`
+                }
+                onClick={() => setIsMenuOpen(false)}
+                end={link.path === "/"}
+              >
+                {link.name}
+              </NavLink>
+            );
+          })}
         </div>
       </div>
     </nav>
