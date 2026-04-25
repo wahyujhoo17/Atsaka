@@ -1,46 +1,35 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, User, ArrowRight } from 'lucide-react';
-
-// Dummy Data untuk Artikel
-const dummyArticles = [
-  {
-    id: 1,
-    slug: 'pentingnya-sistem-pompa-kebakaran-bertekanan-tinggi',
-    title: 'Pentingnya Sistem Pompa Kebakaran Bertekanan Tinggi di Area Industri',
-    excerpt: 'Memahami bagaimana pompa pemadam kebakaran sentrifugal bekerja dan mengapa tekanan tinggi menjadi kunci keselamatan utama dalam memadamkan api di lingkungan industri padat.',
-    imageUrl: 'https://images.pexels.com/photos/279810/pexels-photo-279810.jpeg',
-    date: '12 Okt 2023',
-    author: 'Atsaka Tim Ahli',
-    category: 'Edukasi'
-  },
-  {
-    id: 2,
-    slug: 'perawatan-baju-pemadam-standar-nfpa',
-    title: 'Panduan Perawatan Baju Pemadam (Turnout Gear) Sesuai Standar NFPA',
-    excerpt: 'Baju pemadam yang kotor dapat mengurangi efektivitas penahan panas. Ikuti panduan langkah demi langkah cara mencuci dan merawat perlengkapan pelindung Anda dengan benar.',
-    imageUrl: 'https://images.pexels.com/photos/5765182/pexels-photo-5765182.jpeg',
-    date: '05 Nov 2023',
-    author: 'Divisi Safety',
-    category: 'Panduan'
-  },
-  {
-    id: 3,
-    slug: 'inovasi-nozzle-pemadam-modern',
-    title: 'Inovasi Nozzle Pemadam: Antara Jangkauan Air dan Perlindungan Tirai',
-    excerpt: 'Perkembangan teknologi nozzle terbaru memungkinkan petugas kebakaran untuk beralih secara instan dari serangan jarak jauh ke perlindungan tirai air (fog pattern).',
-    imageUrl: 'https://images.pexels.com/photos/10183419/pexels-photo-10183419.jpeg',
-    date: '18 Des 2023',
-    author: 'Teknisi ATSAKA',
-    category: 'Teknologi'
-  }
-];
+import { Calendar, User, ArrowRight, Loader } from 'lucide-react';
+import { api } from '../lib/api';
 
 const ArticlesPage: React.FC = () => {
-  // Scroll to top on mount
+  const [articles, setArticles] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  // Fetch articles from API
   useEffect(() => {
     window.scrollTo(0, 0);
+    const fetchArticles = async () => {
+      try {
+        const data = await api.getArticles();
+        setArticles(data);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArticles();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-[#1A1A1A] min-h-screen flex items-center justify-center">
+        <Loader className="w-10 h-10 text-[#E5252A] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#1A1A1A] min-h-screen pt-28 pb-20 font-sans text-gray-200">
@@ -62,7 +51,7 @@ const ArticlesPage: React.FC = () => {
 
         {/* Articles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {dummyArticles.map((article) => (
+          {articles.map((article) => (
             <article 
               key={article.id} 
               className="bg-[#232323] rounded-xl overflow-hidden border border-gray-800 shadow-xl group hover:-translate-y-2 transition-all duration-300 flex flex-col"
@@ -72,7 +61,7 @@ const ArticlesPage: React.FC = () => {
                   {article.category}
                 </div>
                 <img 
-                  src={article.imageUrl} 
+                  src={article.imageUrl || 'https://images.pexels.com/photos/279810/pexels-photo-279810.jpeg'} 
                   alt={article.title} 
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-in-out opacity-80 group-hover:opacity-100"
                 />
@@ -83,7 +72,7 @@ const ArticlesPage: React.FC = () => {
                 <div className="flex items-center text-gray-400 text-xs mb-4 uppercase tracking-wide gap-4">
                   <div className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-[#E5252A]" />
-                    {article.date}
+                    {new Date(article.createdAt).toLocaleDateString()}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <User size={14} className="text-[#E5252A]" />

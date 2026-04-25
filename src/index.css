@@ -102,3 +102,97 @@ html {
     opacity: 1 !important;
     transform: translateY(0) !important;
 }
+
+/* Typography Enhancements for Articles */
+.prose-invert {
+  --tw-prose-body: #d1d5db;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-links: #E5252A;
+  --tw-prose-bold: #ffffff;
+  --tw-prose-bullets: #E5252A;
+  --tw-prose-quotes: #ffffff;
+  --tw-prose-quote-borders: #E5252A;
+  --tw-prose-hr: #374151;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+}
+
+.prose ul > li::before {
+  background-color: #E5252A !important;
+}
+
+/* Explicit fallback for lists if prose is not behaving */
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
+}
+
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin-top: 1em !important;
+  margin-bottom: 1em !important;
+}
+
+.prose li {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+  display: list-item !important;
+}
+
+/* Quill alignment helpers */
+.ql-align-center {
+  text-align: center;
+}
+.ql-align-right {
+  text-align: right;
+}
+.ql-align-justify {
+  text-align: justify;
+}
+
+/* Quill Font Sizes */
+.ql-editor .ql-size-small {
+  font-size: 0.8em !important;
+}
+.ql-editor .ql-size-large {
+  font-size: 1.8em !important;
+  line-height: 1.2;
+}
+.ql-editor .ql-size-huge {
+  font-size: 3.5em !important;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+/* Fix for Quill alignment in rendered view */
+.ql-editor .ql-align-center {
+  text-align: center !important;
+}
+.ql-editor .ql-align-right {
+  text-align: right !important;
+}
+.ql-editor .ql-align-justify {
+  text-align: justify !important;
+}
+
+/* Ensure the detail page inherits Quill styles */
+.article-content {
+  color: #d1d5db;
+}
+
+.article-content h1, .article-content h2, .article-content h3 {
+  color: #fff;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.article-content p {
+  margin-bottom: 1em;
+}

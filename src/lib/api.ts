@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 // Helper to get auth token
 const getAuthToken = () => {
@@ -232,6 +232,75 @@ export const api = {
 
     if (!response.ok) {
       throw new Error("Failed to update gallery item");
+    }
+
+    return response.json();
+  },
+
+  // Articles
+  async getArticles(params?: { category?: string; search?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.category) queryParams.append("category", params.category);
+    if (params?.search) queryParams.append("search", params.search);
+
+    const url = `${API_BASE_URL}/articles${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch articles");
+    }
+
+    return response.json();
+  },
+
+  async getArticleBySlug(slug: string) {
+    const response = await fetch(`${API_BASE_URL}/articles/${slug}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch article");
+    }
+
+    return response.json();
+  },
+
+  async createArticle(data: any) {
+    const response = await fetch(`${API_BASE_URL}/articles`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to create article");
+    }
+
+    return response.json();
+  },
+
+  async updateArticle(id: string, data: any) {
+    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update article");
+    }
+
+    return response.json();
+  },
+
+  async deleteArticle(id: string) {
+    const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete article");
     }
 
     return response.json();

@@ -1,71 +1,37 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, User, ArrowLeft, Tag, Share2 } from 'lucide-react';
-
-// Menggunakan data dummy yang sama
-const dummyArticles = [
-  {
-    id: 1,
-    slug: 'pentingnya-sistem-pompa-kebakaran-bertekanan-tinggi',
-    title: 'Pentingnya Sistem Pompa Kebakaran Bertekanan Tinggi di Area Industri',
-    content: `
-      <p class="mb-4">Kebakaran di area industri sering kali melibatkan material yang mudah terbakar dengan intensitas panas yang sangat tinggi. Dalam situasi kritis ini, suplai air standar dari hidran perkotaan sering kali tidak mencukupi untuk memadamkan api secara efektif. Inilah mengapa sistem pompa kebakaran bertekanan tinggi menjadi tulang punggung keselamatan industri.</p>
-      
-      <h3 class="text-2xl font-bold text-white mt-8 mb-4">Mengapa Tekanan Tinggi Sangat Penting?</h3>
-      <p class="mb-4">Pompa sentrifugal bertekanan tinggi dirancang untuk mengatasi "friction loss" (kehilangan tekanan akibat gesekan) saat air didorong melewati selang yang sangat panjang. Selain itu, tekanan yang tinggi memungkinkan air menembus inti api (deep-seated fire) dan memecah air menjadi kabut halus (fog pattern) yang sangat efektif menyerap panas.</p>
-      
-      <h3 class="text-2xl font-bold text-white mt-8 mb-4">Komponen Kunci Pompa Industri</h3>
-      <ul class="list-disc pl-5 mb-6 space-y-2">
-        <li><strong>Impeller Bertingkat:</strong> Memberikan dorongan tekanan ganda pada air sebelum dikeluarkan.</li>
-        <li><strong>Sistem Pendingin Mesin Independen:</strong> Menjamin mesin tetap bekerja optimal meski beroperasi berjam-jam dalam cuaca panas.</li>
-        <li><strong>Rangka Pelindung (Roll Cage):</strong> Memudahkan mobilitas di medan berat dan melindungi komponen vital dari benturan.</li>
-      </ul>
-      
-      <div class="bg-[#2a2a2a] border-l-4 border-[#E5252A] p-6 rounded-r-lg my-8 italic">
-        "Kecepatan penanganan di 5 menit pertama kebakaran menentukan 90% hasil akhir. Pompa bertekanan tinggi memastikan suplai air maksimal tiba di titik api secepat mungkin."
-      </div>
-      
-      <p>Memilih pompa yang tepat bukanlah pengeluaran, melainkan investasi perlindungan aset yang nilainya tak terhingga. ATSAKA menyediakan jajaran pompa sentrifugal spesifikasi militer dan industri yang siap menghadapi tantangan terberat Anda.</p>
-    `,
-    imageUrl: 'https://images.pexels.com/photos/279810/pexels-photo-279810.jpeg',
-    date: '12 Okt 2023',
-    author: 'Atsaka Tim Ahli',
-    category: 'Edukasi',
-    tags: ['Pompa', 'Industri', 'Tekanan Tinggi', 'Keselamatan']
-  },
-  {
-    id: 2,
-    slug: 'perawatan-baju-pemadam-standar-nfpa',
-    title: 'Panduan Perawatan Baju Pemadam (Turnout Gear) Sesuai Standar NFPA',
-    content: '<p>Konten artikel perawatan baju pemadam (dummy)...</p>',
-    imageUrl: 'https://images.pexels.com/photos/5765182/pexels-photo-5765182.jpeg',
-    date: '05 Nov 2023',
-    author: 'Divisi Safety',
-    category: 'Panduan',
-    tags: ['NFPA', 'Perawatan', 'Turnout Gear']
-  },
-  {
-    id: 3,
-    slug: 'inovasi-nozzle-pemadam-modern',
-    title: 'Inovasi Nozzle Pemadam: Antara Jangkauan Air dan Perlindungan Tirai',
-    content: '<p>Konten artikel inovasi nozzle (dummy)...</p>',
-    imageUrl: 'https://images.pexels.com/photos/10183419/pexels-photo-10183419.jpeg',
-    date: '18 Des 2023',
-    author: 'Teknisi ATSAKA',
-    category: 'Teknologi',
-    tags: ['Nozzle', 'Teknologi', 'Peralatan']
-  }
-];
+import 'react-quill/dist/quill.snow.css';
+import { Calendar, User, ArrowLeft, Tag, Share2, Loader } from 'lucide-react';
+import { api } from '../lib/api';
 
 const ArticleDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  
-  // Mencari artikel berdasarkan slug
-  const article = dummyArticles.find(a => a.slug === slug);
+  const [article, setArticle] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const fetchArticle = async () => {
+      if (!slug) return;
+      try {
+        const data = await api.getArticleBySlug(slug);
+        setArticle(data);
+      } catch (error) {
+        console.error("Error fetching article:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArticle();
   }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="bg-[#1A1A1A] min-h-screen flex items-center justify-center">
+        <Loader className="w-10 h-10 text-[#E5252A] animate-spin" />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -109,7 +75,7 @@ const ArticleDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-[#E5252A]" />
-              <span>{article.date}</span>
+              <span>{new Date(article.createdAt).toLocaleDateString()}</span>
             </div>
             <button className="flex items-center gap-2 hover:text-white transition-colors ml-auto">
               <Share2 size={16} />
@@ -121,28 +87,32 @@ const ArticleDetailPage: React.FC = () => {
         {/* Featured Image */}
         <div className="w-full aspect-video rounded-xl overflow-hidden mb-12 shadow-2xl border border-gray-800">
           <img 
-            src={article.imageUrl} 
+            src={article.imageUrl || 'https://images.pexels.com/photos/279810/pexels-photo-279810.jpeg'} 
             alt={article.title} 
             className="w-full h-full object-cover"
           />
         </div>
 
         {/* Article Content */}
-        <article className="prose prose-invert prose-lg max-w-none mb-16 text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
+        <div className="ql-snow mb-16">
+          <article className="article-content ql-editor prose prose-invert prose-lg max-w-none leading-relaxed !p-0"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+        </div>
 
         {/* Article Footer & Tags */}
-        <footer className="border-t border-gray-800 pt-8 mt-12">
-          <div className="flex flex-wrap items-center gap-2">
-            <Tag size={18} className="text-gray-500 mr-2" />
-            {article.tags.map(tag => (
-              <span key={tag} className="bg-[#232323] text-gray-400 px-3 py-1 text-sm rounded-full border border-gray-700 hover:border-[#E5252A] hover:text-white cursor-pointer transition-colors">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </footer>
+        {article.tags && article.tags.length > 0 && (
+          <footer className="border-t border-gray-800 pt-8 mt-12">
+            <div className="flex flex-wrap items-center gap-2">
+              <Tag size={18} className="text-gray-500 mr-2" />
+              {article.tags.map((tag: string) => (
+                <span key={tag} className="bg-[#232323] text-gray-400 px-3 py-1 text-sm rounded-full border border-gray-700 hover:border-[#E5252A] hover:text-white cursor-pointer transition-colors">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </footer>
+        )}
 
       </div>
     </div>

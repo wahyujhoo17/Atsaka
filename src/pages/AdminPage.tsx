@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { galleryCategories } from "../data/galleryCategories";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import toast, { Toaster } from "react-hot-toast";
 import {
   LogOut,
@@ -14,8 +17,8 @@ import {
   Save,
   Upload,
   Loader,
+  FileText,
 } from "lucide-react";
-import { galleryCategories } from "../data/galleryCategories";
 
 interface Product {
   id: string;
@@ -50,14 +53,27 @@ interface GalleryItem {
   categories: string[];
 }
 
+interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  imageUrl: string;
+  author: string;
+  category: string;
+  createdAt: string;
+}
+
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "products" | "categories" | "gallery"
+    "products" | "categories" | "gallery" | "articles"
   >("products");
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
@@ -112,6 +128,9 @@ const AdminPage: React.FC = () => {
               : [],
         }));
         setGallery(normalized);
+      } else if (activeTab === "articles") {
+        const data = await api.getArticles();
+        setArticles(data);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -161,6 +180,16 @@ const AdminPage: React.FC = () => {
           galleryCategories && galleryCategories.length > 0
             ? [galleryCategories[0].slug]
             : ["general"],
+      });
+    } else if (activeTab === "articles") {
+      setFormData({
+        title: "",
+        slug: "",
+        content: "",
+        excerpt: "",
+        imageUrl: "",
+        author: "Admin",
+        category: "Umum",
       });
     }
     setShowModal(true);
@@ -259,6 +288,19 @@ const AdminPage: React.FC = () => {
           }
         }
         await api.deleteGalleryItem(id);
+      } else if (activeTab === "articles") {
+        const item = articles.find((a) => a.id === id);
+        if (item?.imageUrl) {
+          const filename = extractFilename(item.imageUrl);
+          if (filename) {
+            try {
+              await api.deleteImage(filename);
+            } catch (err) {
+              console.warn("Failed to delete article image:", err);
+            }
+          }
+        }
+        await api.deleteArticle(id);
       }
       toast.success("Item berhasil dihapus", {
         duration: 3000,
@@ -318,6 +360,12 @@ const AdminPage: React.FC = () => {
         } else {
           await api.createGalleryItem(formData);
         }
+      } else if (activeTab === "articles") {
+        if (editingItem) {
+          await api.updateArticle(editingItem.id, formData);
+        } else {
+          await api.createArticle(formData);
+        }
       }
 
       toast.success(
@@ -334,9 +382,9 @@ const AdminPage: React.FC = () => {
       );
       closeModal();
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving:", error);
-      toast.error("Gagal menyimpan data", {
+      toast.error(error.message || "Gagal menyimpan data", {
         duration: 4000,
         position: "top-right",
         style: {
@@ -363,7 +411,7 @@ const AdminPage: React.FC = () => {
       // Get full URL based on environment
       const baseUrl =
         import.meta.env.VITE_API_URL?.replace("/api", "") ||
-        "http://localhost:3001";
+        "http://localhost:5001";
       const fullUrl = `${baseUrl}${result.url}`;
 
       setFormData({ ...formData, imageUrl: fullUrl });
@@ -400,7 +448,7 @@ const AdminPage: React.FC = () => {
       // Get full URL based on environment
       const baseUrl =
         import.meta.env.VITE_API_URL?.replace("/api", "") ||
-        "http://localhost:3001";
+        "http://localhost:5001";
       const fullUrl = `${baseUrl}${result.url}`;
 
       setFormData({
@@ -512,6 +560,17 @@ const AdminPage: React.FC = () => {
               <ImageIcon className="w-5 h-5" />
               Gallery
             </button>
+            <button
+              onClick={() => setActiveTab("articles")}
+              className={`${
+                activeTab === "articles"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+            >
+              <FileText className="w-5 h-5" />
+              Articles
+            </button>
           </nav>
         </div>
 
@@ -527,7 +586,9 @@ const AdminPage: React.FC = () => {
               ? "Product"
               : activeTab === "categories"
                 ? "Category"
-                : "Gallery Item"}
+                : activeTab === "gallery"
+                  ? "Gallery Item"
+                  : "Article"}
           </button>
         </div>
 
@@ -708,13 +769,76 @@ const AdminPage: React.FC = () => {
               )}
             </div>
           )}
+
+          {activeTab === "articles" && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {articles.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        Belum ada artikel. Klik "Tambah Article" untuk menambah.
+                      </td>
+                    </tr>
+                  ) : (
+                    articles.map((article) => (
+                      <tr key={article.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {article.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {article.category}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(article.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(article)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-4"
+                          >
+                            <Edit className="w-4 h-4 inline" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(article.id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4 inline" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
 
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className={`bg-white dark:bg-gray-800 rounded-lg ${activeTab === 'articles' ? 'max-w-5xl' : 'max-w-2xl'} w-full max-h-[95vh] overflow-y-auto transition-all duration-300`}>
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -723,7 +847,9 @@ const AdminPage: React.FC = () => {
                     ? "Product"
                     : activeTab === "categories"
                       ? "Category"
-                      : "Gallery Item"}
+                      : activeTab === "gallery"
+                        ? "Gallery Item"
+                        : "Article"}
                 </h2>
                 <button
                   onClick={closeModal}
@@ -734,6 +860,130 @@ const AdminPage: React.FC = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {activeTab === "articles" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.title || ""}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            title: e.target.value,
+                            slug: generateSlug(e.target.value),
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Slug
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.slug || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, slug: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.category || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Excerpt (Ringkasan Singkat)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={formData.excerpt || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, excerpt: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Featured Image
+                      </label>
+                      <div className="flex items-center gap-4">
+                        {formData.imageUrl && (
+                          <img
+                            src={formData.imageUrl}
+                            alt="Preview"
+                            className="w-20 h-20 object-cover rounded-lg"
+                          />
+                        )}
+                        <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg border border-dashed border-gray-400 flex flex-col items-center justify-center min-w-[150px]">
+                          {uploadingImage ? (
+                            <Loader className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-5 h-5 mb-1" />
+                              <span className="text-xs">Upload Image</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files?.[0])
+                                handleImageUpload(e.target.files[0]);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Content (Isi Artikel)
+                      </label>
+                      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                        <ReactQuill
+                          theme="snow"
+                          value={formData.content || ""}
+                          onChange={(content) =>
+                            setFormData({ ...formData, content })
+                          }
+                          className="h-[450px] mb-12"
+                          modules={{
+                            toolbar: [
+                              [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                              [{ size: ["small", false, "large", "huge"] }],
+                              ["bold", "italic", "underline", "strike"],
+                              [{ color: [] }, { background: [] }],
+                              [{ list: "ordered" }, { list: "bullet" }],
+                              [{ align: [] }],
+                              ["link", "image"],
+                              ["clean"],
+                            ],
+                          }}
+                        />
+                      </div>
+                      <div className="h-12"></div> {/* Spacer for fixed toolbar */}
+                    </div>
+                  </>
+                )}
+
                 {activeTab === "products" && (
                   <>
                     <div>

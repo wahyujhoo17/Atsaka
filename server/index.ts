@@ -21,7 +21,7 @@ const app = express();
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -52,7 +52,7 @@ app.use(
   cors({
     origin: isProduction
       ? process.env.FRONTEND_URL || "*"
-      : ["http://localhost:5173", "http://localhost:3000"],
+      : ["http://localhost:5001", "http://localhost:3000"],
     credentials: true,
   }),
 );
@@ -544,6 +544,104 @@ app.delete("/api/gallery/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting gallery item:", error);
     res.status(500).json({ error: "Failed to delete gallery item" });
+  }
+});
+
+// ============= ARTICLES ENDPOINTS =============
+
+// Get all articles
+app.get("/api/articles", async (req: Request, res: Response) => {
+  try {
+    const { category, search } = req.query;
+
+    const articles = await prisma.article.findMany({
+      where: {
+        ...(category && { category: category as string }),
+        ...(search && {
+          OR: [
+            { title: { contains: search as string, mode: "insensitive" } },
+            { content: { contains: search as string, mode: "insensitive" } },
+          ],
+        }),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(articles);
+  } catch (error) {
+    console.error("Error fetching articles:", error);
+    res.status(500).json({ error: "Failed to fetch articles" });
+  }
+});
+
+// Get article by slug
+app.get("/api/articles/:slug", async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+
+    const article = await prisma.article.findUnique({
+      where: { slug },
+    });
+
+    if (!article) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+
+    res.json(article);
+  } catch (error) {
+    console.error("Error fetching article:", error);
+    res.status(500).json({ error: "Failed to fetch article" });
+  }
+});
+
+// Create article
+app.post("/api/articles", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    // Strip out id and timestamps if they exist
+    const { id, createdAt, updatedAt, ...articleData } = req.body;
+    const article = await prisma.article.create({
+      data: articleData,
+    });
+
+    res.status(201).json(article);
+  } catch (error: any) {
+    console.error("Error creating article:", error);
+    res.status(500).json({ error: error.message || "Failed to create article" });
+  }
+});
+
+// Update article
+app.put("/api/articles/:id", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // Strip out id and timestamps from body to prevent Prisma error
+    const { id: bodyId, createdAt, updatedAt, ...articleData } = req.body;
+
+    const article = await prisma.article.update({
+      where: { id },
+      data: articleData,
+    });
+
+    res.json(article);
+  } catch (error: any) {
+    console.error("Error updating article:", error);
+    res.status(500).json({ error: error.message || "Failed to update article" });
+  }
+});
+
+// Delete article
+app.delete("/api/articles/:id", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.article.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Article deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting article:", error);
+    res.status(500).json({ error: "Failed to delete article" });
   }
 });
 

@@ -68,3 +68,19 @@ model Admin {
   @@index([email])
   @@map("admins")
 }
+
+model Article {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  excerpt   String?  @db.Text
+  imageUrl  String?  @map("image_url")
+  author    String   @default("Admin")
+  category  String   @default("Umum")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([slug])
+  @@map("articles")
+}
