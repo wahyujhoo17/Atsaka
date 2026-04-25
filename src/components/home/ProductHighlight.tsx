@@ -7,7 +7,7 @@ const categories = [
     title: 'FIRE PUMP',
     imageUrl: '/img/products/fire-pump-removebg-preview.png',
     fallbackUrl: 'https://images.pexels.com/photos/2684219/pexels-photo-2684219.jpeg',
-    category: 'pump',
+    category: 'pompa',
   },
   {
     id: 'baju-pemadam',
