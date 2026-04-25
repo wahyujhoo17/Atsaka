@@ -14,21 +14,21 @@ const categories = [
     title: 'BAJU PEMADAM',
     imageUrl: '/img/products/baju-pemadam-removebg-preview.png',
     fallbackUrl: 'https://images.pexels.com/photos/5765182/pexels-photo-5765182.jpeg',
-    category: 'equipment',
+    category: 'baju-pemadam',
   },
   {
     id: 'peralatan-tangan',
     title: 'PERALATAN TANGAN',
     imageUrl: '/img/products/peralatan-tangan-removebg-preview.png',
     fallbackUrl: 'https://images.pexels.com/photos/209235/pexels-photo-209235.jpeg',
-    category: 'equipment',
+    category: 'peralatan-tangan',
   },
   {
     id: 'aksesoris',
     title: 'AKSESORIS',
     imageUrl: '/img/products/aksesoris-removebg-preview.png',
     fallbackUrl: 'https://images.pexels.com/photos/210881/pexels-photo-210881.jpeg',
-    category: 'accessory',
+    category: 'Aksesoris',
   },
 ];
 
