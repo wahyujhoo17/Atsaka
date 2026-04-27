@@ -92,16 +92,13 @@ const AboutSection: React.FC = () => {
             </div>
 
             {/* Bottom: 3 Stats Boxes */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 flex-1">
+            <div className="grid grid-cols-3 gap-2 md:gap-5 flex-1">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-gray-50 p-6 flex flex-col justify-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="font-bold text-gray-900 mb-3 flex items-start text-3xl lg:text-4xl">
-                    {stat.value}
-                    {stat.suffix && (
-                      <span className="text-orange-500 text-2xl lg:text-3xl ml-1 leading-none font-black">{stat.suffix}</span>
-                    )}
-                  </div>
-                  <p className="text-gray-500 text-sm font-medium leading-relaxed">
+                <div key={index} className="bg-gray-50 p-2 md:p-6 flex flex-col justify-center border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <p className="text-gray-600 text-[9px] md:text-sm lg:text-base leading-relaxed text-center">
+                    <span className="font-bold text-gray-900 mr-1">
+                      {stat.value}{stat.suffix}
+                    </span>
                     {stat.label}
                   </p>
                 </div>

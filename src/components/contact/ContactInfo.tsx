@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin, Clock } from 'lucide-react';
 const ContactInfo: React.FC = () => {
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Contact Information</h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Informasi Kontak</h3>
       
       <div className="space-y-6">
         <div className="flex items-start">
@@ -12,10 +12,11 @@ const ContactInfo: React.FC = () => {
             <MapPin className="w-6 h-6 text-red-500 dark:text-red-400" />
           </div>
           <div>
-            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Office Location</h4>
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Lokasi Kantor</h4>
             <p className="text-gray-600 dark:text-gray-300">
-              Jl. Industri No. 123, Jakarta Timur,<br />
-              DKI Jakarta, Indonesia
+              Jl Raya Condet No 9, Balekambang,<br />
+              Kramat Jati, Kota Jakarta Timur,<br />
+              DKI Jakarta 13530
             </p>
           </div>
         </div>
@@ -25,9 +26,8 @@ const ContactInfo: React.FC = () => {
             <Phone className="w-6 h-6 text-red-500 dark:text-red-400" />
           </div>
           <div>
-            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Phone</h4>
-            <p className="text-gray-600 dark:text-gray-300">+62 21 555-7890</p>
-            <p className="text-gray-600 dark:text-gray-300">+62 812 3456 7890 (Sales)</p>
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Telepon</h4>
+            <p className="text-gray-600 dark:text-gray-300">+62 817 6454 312</p>
           </div>
         </div>
         
@@ -37,8 +37,7 @@ const ContactInfo: React.FC = () => {
           </div>
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Email</h4>
-            <p className="text-gray-600 dark:text-gray-300">info@atsaka.co.id</p>
-            <p className="text-gray-600 dark:text-gray-300">sales@atsaka.co.id</p>
+            <p className="text-gray-600 dark:text-gray-300">sales@kliksinarsurya.com</p>
           </div>
         </div>
         
@@ -47,19 +46,19 @@ const ContactInfo: React.FC = () => {
             <Clock className="w-6 h-6 text-red-500 dark:text-red-400" />
           </div>
           <div>
-            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Business Hours</h4>
-            <p className="text-gray-600 dark:text-gray-300">Monday - Friday: 8:00 AM - 5:00 PM</p>
-            <p className="text-gray-600 dark:text-gray-300">Saturday: 9:00 AM - 1:00 PM</p>
-            <p className="text-gray-600 dark:text-gray-300">Sunday: Closed</p>
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Jam Operasional</h4>
+            <p className="text-gray-600 dark:text-gray-300">Senin - Jumat: 08:00 - 17:00</p>
+            <p className="text-gray-600 dark:text-gray-300">Sabtu: 09:00 - 13:00</p>
+            <p className="text-gray-600 dark:text-gray-300">Minggu: Tutup</p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-              Emergency response available 24/7
+              Layanan darurat tersedia 24/7
             </p>
           </div>
         </div>
       </div>
       
       <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Follow Us</h4>
+        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ikuti Kami</h4>
         <div className="flex space-x-4">
           <a
             href="https://facebook.com"

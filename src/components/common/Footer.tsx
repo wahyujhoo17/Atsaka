@@ -92,7 +92,7 @@ const Footer: React.FC = () => {
 
         {/* Footer Bottom */}
         <div className="mt-16 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-gray-500 text-xs">
+          <p className="text-gray-500 text-xs text-center md:text-left">
             © {new Date().getFullYear()} ATSAKA - PT. Sinar Surya Semestaraya. Hak cipta dilindungi undang-undang.
           </p>
           <div className="flex space-x-6 text-xs">

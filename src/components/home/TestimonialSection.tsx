@@ -99,7 +99,7 @@ const TestimonialSection: React.FC = () => {
                 isAnimating ? 'opacity-0 translate-x-10' : 'opacity-100 translate-x-0'
               }`}
             >
-              <div className="flex flex-col md:flex-row items-center bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-8 md:p-12">
+              <div className="flex flex-col md:flex-row items-center bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 md:p-12 border border-white/10">
                 <div className="mb-6 md:mb-0 md:mr-8 flex-shrink-0">
                   <div className="relative">
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-white">
@@ -147,20 +147,20 @@ const TestimonialSection: React.FC = () => {
 
           <button
             onClick={prevTestimonial}
-            className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 bg-white text-blue-500 rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            className="absolute top-1/2 -left-2 md:-left-12 transform -translate-y-1/2 bg-white text-blue-500 rounded-full p-2.5 shadow-xl hover:bg-gray-100 transition-all active:scale-90 z-20"
             aria-label="Testimoni sebelumnya"
             disabled={isAnimating}
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
           <button
             onClick={nextTestimonial}
-            className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 bg-white text-blue-500 rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            className="absolute top-1/2 -right-2 md:-right-12 transform -translate-y-1/2 bg-white text-blue-500 rounded-full p-2.5 shadow-xl hover:bg-gray-100 transition-all active:scale-90 z-20"
             aria-label="Testimoni berikutnya"
             disabled={isAnimating}
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
       </div>

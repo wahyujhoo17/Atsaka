@@ -69,7 +69,7 @@ const StatisticsSection: React.FC = () => {
       className="py-16 bg-gray-900 opacity-0 transition-opacity duration-1000 ease-in-out"
     >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {stats.map((stat, index) => (
             <div
               key={index}
@@ -77,14 +77,14 @@ const StatisticsSection: React.FC = () => {
               className="text-center opacity-0 transform translate-y-12 transition-all duration-700"
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-10 rounded-full mb-4">
-                {stat.icon}
+              <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-white bg-opacity-10 rounded-full mb-3 md:mb-4">
+                {React.cloneElement(stat.icon as React.ReactElement, { className: "w-6 h-6 md:w-8 md:h-8 text-red-500" })}
               </div>
-              <div className="text-4xl font-bold text-white mb-2">
+              <div className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">
                 {stat.value}
                 <span className="text-red-500">{stat.suffix}</span>
               </div>
-              <p className="text-gray-400">{stat.label}</p>
+              <p className="text-gray-400 text-xs md:text-base leading-tight md:leading-normal">{stat.label}</p>
             </div>
           ))}
         </div>

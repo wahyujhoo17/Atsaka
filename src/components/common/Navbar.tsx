@@ -200,20 +200,20 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu Panel */}
       <div
-        className={`absolute top-full left-0 w-full bg-white dark:bg-gray-950 shadow-lg transition-all duration-300 ease-out md:hidden origin-top ${
+        className={`absolute top-full left-0 w-full bg-white dark:bg-gray-950 shadow-2xl transition-all duration-300 ease-out md:hidden origin-top border-t border-gray-100 dark:border-gray-800 ${
           isMenuOpen
             ? "opacity-100 scale-y-100 visible"
             : "opacity-0 scale-y-95 invisible"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col space-y-1">
+        <div className="container mx-auto px-6 py-8 flex flex-col space-y-2">
           {navLinks.map((link) => {
             const isHashLink = link.path.startsWith('/#');
             return isHashLink ? (
               <a
                 key={`mobile-${link.name}`}
                 href={link.path}
-                className="block px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
+                className="flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
                 onClick={(e) => {
                   setIsMenuOpen(false);
                   if (location.pathname === '/') {
@@ -235,10 +235,10 @@ const Navbar: React.FC = () => {
                 key={`mobile-${link.name}`}
                 to={link.path}
                 className={({ isActive }) =>
-                  `block px-4 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
+                  `flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 ${
                     isActive
-                      ? "bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
+                      ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
                   }`
                 }
                 onClick={() => setIsMenuOpen(false)}
@@ -248,6 +248,17 @@ const Navbar: React.FC = () => {
               </NavLink>
             );
           })}
+
+          {/* Mobile CTA */}
+          <div className="pt-6 mt-4 border-t border-gray-100 dark:border-gray-800">
+            <Link
+              to="/contact"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center justify-center w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-600/20"
+            >
+              Hubungi Kami
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

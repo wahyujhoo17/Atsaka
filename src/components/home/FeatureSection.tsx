@@ -75,32 +75,32 @@ const FeatureSection: React.FC = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
           {features.map((feature, index) => (
             <div
               key={index}
               ref={(el) => (featuresRef.current[index] = el)}
-              className="group relative bg-white/5 backdrop-blur-md rounded-3xl p-10 border border-white/10 hover:border-red-500/50 transform transition-all duration-500 opacity-0 translate-y-12 shadow-2xl hover:-translate-y-2"
+              className="group relative bg-white/5 backdrop-blur-md rounded-3xl p-7 md:p-10 border border-white/10 hover:border-red-500/50 transform transition-all duration-500 opacity-0 translate-y-12 shadow-2xl hover:-translate-y-2"
               style={{ transitionDelay: `${index * 150}ms` }}
             >
               {/* Glow effect on hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:from-red-600/5 group-hover:to-transparent rounded-3xl transition-all duration-500"></div>
 
               {/* Icon Container */}
-              <div className="relative w-20 h-20 bg-gradient-to-br from-red-600 to-red-800 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-red-900/40 group-hover:scale-110 transition-transform duration-500">
+              <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-red-600 to-red-800 rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg shadow-red-900/40 group-hover:scale-110 transition-transform duration-500">
                 <div className="text-white">
-                  {React.cloneElement(feature.icon as React.ReactElement, { className: "w-10 h-10" })}
+                  {React.cloneElement(feature.icon as React.ReactElement, { className: "w-8 h-8 md:w-10 md:h-10" })}
                 </div>
               </div>
 
               <div className="relative">
-                <div className="text-red-500 font-black text-6xl opacity-5 absolute -top-4 -right-2">
+                <div className="text-red-500 font-black text-5xl md:text-6xl opacity-5 absolute -top-4 -right-2">
                   0{index + 1}
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-red-400 transition-colors">
+                <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-white group-hover:text-red-400 transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-gray-400 text-lg leading-relaxed group-hover:text-gray-300 transition-colors">
+                <p className="text-gray-400 text-base md:text-lg leading-relaxed group-hover:text-gray-300 transition-colors">
                   {feature.description}
                 </p>
               </div>

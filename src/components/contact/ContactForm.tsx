@@ -67,21 +67,21 @@ const ContactForm: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Message Sent Successfully!</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Pesan Berhasil Dikirim!</h3>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Thank you for contacting us. Our team will get back to you shortly.
+            Terima kasih telah menghubungi kami. Tim kami akan segera membalas pesan Anda.
           </p>
-          <Button onClick={() => setSubmitStatus('idle')}>Send Another Message</Button>
+          <Button onClick={() => setSubmitStatus('idle')}>Kirim Pesan Lain</Button>
         </div>
       ) : (
         <>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Get In Touch</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Kirim Pesan</h3>
           
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Full Name*
+                  Nama Lengkap*
                 </label>
                 <input
                   type="text"
@@ -91,13 +91,13 @@ const ContactForm: React.FC = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Your name"
+                  placeholder="Nama Anda"
                 />
               </div>
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email Address*
+                  Alamat Email*
                 </label>
                 <input
                   type="email"
@@ -107,13 +107,13 @@ const ContactForm: React.FC = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="your.email@example.com"
+                  placeholder="email.anda@contoh.com"
                 />
               </div>
               
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Phone Number
+                  Nomor Telepon
                 </label>
                 <input
                   type="tel"
@@ -128,7 +128,7 @@ const ContactForm: React.FC = () => {
               
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Subject*
+                  Subjek*
                 </label>
                 <input
                   type="text"
@@ -138,13 +138,13 @@ const ContactForm: React.FC = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="How can we help you?"
+                  placeholder="Apa yang bisa kami bantu?"
                 />
               </div>
               
               <div className="md:col-span-2">
                 <label htmlFor="productInterest" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Product Interest
+                  Minat Produk
                 </label>
                 <select
                   id="productInterest"
@@ -153,18 +153,18 @@ const ContactForm: React.FC = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
                 >
-                  <option value="">Select a product category</option>
-                  <option value="pumps">Fire Pumps</option>
-                  <option value="equipment">Firefighting Equipment</option>
-                  <option value="accessories">Accessories & Parts</option>
-                  <option value="training">Training Programs</option>
-                  <option value="other">Other</option>
+                  <option value="">Pilih kategori produk</option>
+                  <option value="pumps">Pompa Pemadam</option>
+                  <option value="equipment">Peralatan Pemadam</option>
+                  <option value="accessories">Aksesoris & Suku Cadang</option>
+                  <option value="training">Program Pelatihan</option>
+                  <option value="other">Lainnya</option>
                 </select>
               </div>
               
               <div className="md:col-span-2">
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Message*
+                  Pesan*
                 </label>
                 <textarea
                   id="message"
@@ -174,7 +174,7 @@ const ContactForm: React.FC = () => {
                   required
                   rows={6}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white resize-none"
-                  placeholder="Please describe your inquiry in detail..."
+                  placeholder="Silakan deskripsikan pertanyaan Anda secara detail..."
                 />
               </div>
             </div>
@@ -190,11 +190,11 @@ const ContactForm: React.FC = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Sending...
+                  Mengirim...
                 </span>
               ) : (
                 <span className="flex items-center">
-                  Send Message
+                  Kirim Pesan
                   <Send className="ml-2" size={16} />
                 </span>
               )}
