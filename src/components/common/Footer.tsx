@@ -14,77 +14,133 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
           {/* Brand Column */}
-          <div className="space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <Link to="/" className="flex items-center space-x-3 group">
-              <img
-                src="/img/logo.png"
-                alt="ATSAKA Logo"
-                className="w-10 h-10 transition-transform duration-300 group-hover:scale-110"
-              />
-              <span className="text-2xl font-semibold tracking-tight text-white">ATSAKA</span>
+              <div className="p-2 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10 group-hover:border-red-500/50 transition-all duration-300">
+                <img
+                  src="/img/logo.png"
+                  alt="ATSAKA Logo"
+                  className="w-8 h-8 transition-transform duration-500 group-hover:rotate-[360deg]"
+                />
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-white group-hover:text-red-500 transition-colors">ATSAKA</span>
             </Link>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Divisi unggulan dari PT. Sinar Surya Semestaraya yang menyediakan solusi pemadam kebakaran hutan berkualitas tinggi.
+            <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+              Divisi unggulan dari PT Indo Atsaka Industri yang menyediakan solusi pemadam kebakaran hutan berkualitas tinggi dan berstandar internasional.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
-                <Facebook size={16} />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
-                <Instagram size={16} />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
-                <Twitter size={16} />
-              </a>
-              <a href="#" className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all shadow-md">
-                <Linkedin size={16} />
-              </a>
+            <div className="flex space-x-3">
+              {[
+                { Icon: Facebook, href: "#" },
+                { Icon: Instagram, href: "#" },
+                { Icon: Twitter, href: "#" },
+                { Icon: Linkedin, href: "#" },
+              ].map(({ Icon, href }, idx) => (
+                <a
+                  key={idx}
+                  href={href}
+                  className="w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white hover:-translate-y-1 transition-all duration-300 border border-white/5"
+                >
+                  <Icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Tautan Cepat</h4>
-            <ul className="space-y-3">
-              <li><Link to="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Beranda</Link></li>
-              <li><Link to="/products" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Produk</Link></li>
-              <li><Link to="/#about" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Tentang Kami</Link></li>
-              <li><Link to="/gallery" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Galeri</Link></li>
-              <li><Link to="/contact" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Kontak</Link></li>
+          <div className="lg:col-span-2">
+            <h4 className="text-white font-bold text-sm mb-7 uppercase tracking-[0.15em] relative inline-block">
+              Tautan Cepat
+              <span className="absolute -bottom-2 left-0 w-8 h-1 bg-red-600 rounded-full"></span>
+            </h4>
+            <ul className="space-y-4">
+              {[
+                { name: "Beranda", path: "/" },
+                { name: "Fire Pump", path: "/products?search=Fire+Pump" },
+                { name: "Produk", path: "/products" },
+                { name: "Company", path: "/company" },
+                { name: "Kontak", path: "/contact" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link to={link.path} className="text-gray-400 hover:text-white hover:translate-x-1 inline-block transition-all text-sm">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Products Column */}
-          <div>
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Produk Kami</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Pompa Pemadam</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Peralatan Pemadam</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Aksesoris & Suku Cadang</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Layanan Perawatan</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors text-sm">Program Pelatihan</a></li>
+          <div className="lg:col-span-2">
+            <h4 className="text-white font-bold text-sm mb-7 uppercase tracking-[0.15em] relative inline-block">
+              Produk Kami
+              <span className="absolute -bottom-2 left-0 w-8 h-1 bg-red-600 rounded-full"></span>
+            </h4>
+            <ul className="space-y-4">
+              {[
+                { name: "Pompa Pemadan", path: "/products?search=Pompa+Pemadam" },
+                { name: "Baju Pemadam", path: "/products?search=Baju+Pemadam" },
+                { name: "Peralatan Tangan", path: "/products?search=Peralatan+Tangan" },
+                { name: "Aksesoris", path: "/products?search=Aksesoris" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link to={link.path} className="text-gray-400 hover:text-white hover:translate-x-1 inline-block transition-all text-sm">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Certification Column */}
+          <div className="lg:col-span-2">
+            <h4 className="text-white font-bold text-sm mb-7 uppercase tracking-[0.15em] relative inline-block">
+              Sertifikasi
+              <span className="absolute -bottom-2 left-0 w-8 h-1 bg-red-600 rounded-full"></span>
+            </h4>
+            <ul className="space-y-4">
+              {["TKDN", "Uji Lab Damkar SNI", "OEM Honda"].map((item) => (
+                <li key={item} className="text-gray-400 text-sm flex items-center space-x-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Contact Column */}
-          <div>
-            <h4 className="text-white font-bold text-sm mb-6 uppercase tracking-wider border-l-2 border-red-600 pl-3">Hubungi Kami</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start space-x-3">
-                <MapPin className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400 text-sm leading-relaxed">
-                  Jl Raya Condet No 9, Balekambang, Kramat Jati Kota Adm Jakarta Timur DKI Jakarta 13530
-                </span>
+          <div className="lg:col-span-2">
+            <h4 className="text-white font-bold text-sm mb-7 uppercase tracking-[0.15em] relative inline-block">
+              Hubungi Kami
+              <span className="absolute -bottom-2 left-0 w-8 h-1 bg-red-600 rounded-full"></span>
+            </h4>
+            <ul className="space-y-5">
+              <li className="flex items-start space-x-3 group">
+                <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600 transition-colors">
+                  <MapPin className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
+                </div>
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=PT+Indo+Atsaka+Industri+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors text-xs leading-relaxed"
+                >
+                  <span className="font-semibold block text-white mb-1">PT Indo Atsaka Industri</span>
+                  Jalan Raya Condet No.6, Jakarta Timur
+                </a>
               </li>
-              <li className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">+62 8176454312</span>
+              <li className="flex items-center space-x-3 group">
+                <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600 transition-colors">
+                  <Phone className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
+                </div>
+                <a href="tel:08176454312" className="text-gray-400 hover:text-white transition-colors text-xs">08176454312</a>
               </li>
-              <li className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">sales@kliksinarsurya.com</span>
+              <li className="flex items-center space-x-3 group">
+                <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600 transition-colors">
+                  <Mail className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
+                </div>
+                <a href="mailto:sales@kliksinarsurya.com" className="text-gray-400 hover:text-white transition-colors text-xs">sales@kliksinarsurya.com</a>
               </li>
             </ul>
           </div>
@@ -93,7 +149,7 @@ const Footer: React.FC = () => {
         {/* Footer Bottom */}
         <div className="mt-16 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-gray-500 text-xs text-center md:text-left">
-            © {new Date().getFullYear()} ATSAKA - PT. Sinar Surya Semestaraya. Hak cipta dilindungi undang-undang.
+            © {new Date().getFullYear()} ATSAKA - PT Indo Atsaka Industri. Hak cipta dilindungi undang-undang.
           </p>
           <div className="flex space-x-6 text-xs">
             <Link to="#" className="text-gray-500 hover:text-white transition-colors">Kebijakan Privasi</Link>

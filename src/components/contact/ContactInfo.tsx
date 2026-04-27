@@ -13,11 +13,15 @@ const ContactInfo: React.FC = () => {
           </div>
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Lokasi Kantor</h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              Jl Raya Condet No 9, Balekambang,<br />
-              Kramat Jati, Kota Jakarta Timur,<br />
-              DKI Jakarta 13530
-            </p>
+            <a 
+              href="https://www.google.com/maps/search/?api=1&query=PT+Indo+Atsaka+Industri+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors"
+            >
+              <span className="font-semibold block text-gray-900 dark:text-white">PT Indo Atsaka Industri</span>
+              Jalan Raya Condet No.6 RT.: 02/RW.:, 01, RW.Kel:, Balekambang, Kec: Kramatjati, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13530
+            </a>
           </div>
         </div>
         
@@ -27,7 +31,7 @@ const ContactInfo: React.FC = () => {
           </div>
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Telepon</h4>
-            <p className="text-gray-600 dark:text-gray-300">+62 817 6454 312</p>
+            <a href="tel:08176454312" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors">08176454312</a>
           </div>
         </div>
         
@@ -37,7 +41,7 @@ const ContactInfo: React.FC = () => {
           </div>
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Email</h4>
-            <p className="text-gray-600 dark:text-gray-300">sales@kliksinarsurya.com</p>
+            <a href="mailto:sales@kliksinarsurya.com" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors">sales@kliksinarsurya.com</a>
           </div>
         </div>
         

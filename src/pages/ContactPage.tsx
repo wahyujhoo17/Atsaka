@@ -42,7 +42,7 @@ const ContactPage: React.FC = () => {
             </h3>
             <div className="h-96">
               <iframe
-                src="https://www.google.com/maps?q=Jl.+Raya+Condet+No.9,+RT.2/RW.1,+Balekambang,+Kec.+Kramat+jati,+Kota+Jakarta+Timur,+Daerah+Khusus+Ibukota+Jakarta+13530&output=embed"
+                src="https://www.google.com/maps?q=PT+Indo+Atsaka+Industri+Jalan+Raya+Condet+No.6,+RT.2/RW.1,+Balekambang,+Kec.+Kramat+jati,+Kota+Jakarta+Timur,+Daerah+Khusus+Ibukota+Jakarta+13530&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

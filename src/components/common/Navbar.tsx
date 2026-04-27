@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom"; // Import useLocation
-import { Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X, Moon, Sun, ChevronDown } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
 const Navbar: React.FC = () => {
@@ -24,8 +24,16 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: "Beranda", path: "/" },
     { name: "Produk", path: "/products" },
-    { name: "Tentang Kami", path: "/#about" },
-    { name: "Galeri", path: "/gallery" },
+    { 
+      name: "Company", 
+      path: "/company",
+      subLinks: [
+        { name: "About Us", path: "/company#about" },
+        { name: "History", path: "/company#history" },
+        { name: "Certificates", path: "/company#certificates" },
+        { name: "Customer", path: "/company#customer" },
+      ]
+    },
     { name: "Artikel", path: "/articles" },
     { name: "Kontak", path: "/contact" },
   ];
@@ -108,14 +116,53 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center space-x-7 lg:space-x-9">
           {navLinks.map((link) => {
             const isHashLink = link.path.startsWith('/#');
+            const hasSubLinks = 'subLinks' in link && link.subLinks;
+
+            if (hasSubLinks) {
+              return (
+                <div key={link.name} className="relative group">
+                  <NavLink
+                    to={link.path}
+                    className={({ isActive }) => `${getLinkClassName({ isActive })} flex items-center gap-1`}
+                  >
+                    {link.name}
+                    <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+                  </NavLink>
+                  
+                  {/* Dropdown Menu */}
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                    {link.subLinks?.map((sub) => (
+                      <Link
+                        key={sub.name}
+                        to={sub.path}
+                        className="block px-6 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        onClick={() => {
+                          if (location.pathname === '/company' && sub.path.includes('#')) {
+                            const targetId = sub.path.split('#')[1];
+                            const element = document.getElementById(targetId);
+                            if (element) {
+                              const top = element.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top, behavior: 'smooth' });
+                              window.history.pushState(null, '', sub.path);
+                            }
+                          }
+                        }}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             return isHashLink ? (
               <a
                 key={link.name}
                 href={link.path}
                 className={getLinkClassName({ isActive: false })}
-                onClick={(e) => {
+                onClick={() => {
                   if (location.pathname === '/') {
-                    e.preventDefault();
                     const targetId = link.path.substring(2);
                     const element = document.getElementById(targetId);
                     if (element) {
@@ -134,6 +181,14 @@ const Navbar: React.FC = () => {
                 to={link.path}
                 className={getLinkClassName}
                 end={link.path === "/"}
+                onClick={() => {
+                  if (link.name === "Produk" && location.pathname === "/products") {
+                    // Force a "refresh" of the products page state if already there
+                    if (location.search !== "") {
+                      // Navigate to /products without query params
+                    }
+                  }
+                }}
               >
                 {link.name}
               </NavLink>
@@ -209,43 +264,73 @@ const Navbar: React.FC = () => {
         <div className="container mx-auto px-6 py-8 flex flex-col space-y-2">
           {navLinks.map((link) => {
             const isHashLink = link.path.startsWith('/#');
-            return isHashLink ? (
-              <a
-                key={`mobile-${link.name}`}
-                href={link.path}
-                className="flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
-                onClick={(e) => {
-                  setIsMenuOpen(false);
-                  if (location.pathname === '/') {
-                    e.preventDefault();
-                    const targetId = link.path.substring(2);
-                    const element = document.getElementById(targetId);
-                    if (element) {
-                      const top = element.getBoundingClientRect().top + window.scrollY - 80;
-                      window.scrollTo({ top, behavior: 'smooth' });
-                      window.history.pushState(null, '', link.path);
+            const hasSubLinks = 'subLinks' in link && link.subLinks;
+
+            return (
+              <div key={`mobile-${link.name}`} className="flex flex-col">
+                {isHashLink ? (
+                  <a
+                    href={link.path}
+                    className="flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      if (location.pathname === '/') {
+                        const targetId = link.path.substring(2);
+                        const element = document.getElementById(targetId);
+                        if (element) {
+                          const top = element.getBoundingClientRect().top + window.scrollY - 80;
+                          window.scrollTo({ top, behavior: 'smooth' });
+                          window.history.pushState(null, '', link.path);
+                        }
+                      }
+                    }}
+                  >
+                    {link.name}
+                  </a>
+                ) : (
+                  <NavLink
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 ${
+                        isActive
+                          ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                          : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
+                      }`
                     }
-                  }
-                }}
-              >
-                {link.name}
-              </a>
-            ) : (
-              <NavLink
-                key={`mobile-${link.name}`}
-                to={link.path}
-                className={({ isActive }) =>
-                  `flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 ${
-                    isActive
-                      ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
-                  }`
-                }
-                onClick={() => setIsMenuOpen(false)}
-                end={link.path === "/"}
-              >
-                {link.name}
-              </NavLink>
+                    onClick={() => !hasSubLinks && setIsMenuOpen(false)}
+                    end={link.path === "/"}
+                  >
+                    {link.name}
+                    {hasSubLinks && <ChevronDown size={16} className="ml-auto" />}
+                  </NavLink>
+                )}
+
+                {hasSubLinks && (
+                  <div className="pl-6 flex flex-col space-y-1 mt-1">
+                    {link.subLinks?.map((sub) => (
+                      <Link
+                        key={`mobile-sub-${sub.name}`}
+                        to={sub.path}
+                        className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400 transition-all"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          if (location.pathname === '/company' && sub.path.includes('#')) {
+                            const targetId = sub.path.split('#')[1];
+                            const element = document.getElementById(targetId);
+                            if (element) {
+                              const top = element.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top, behavior: 'smooth' });
+                              window.history.pushState(null, '', sub.path);
+                            }
+                          }
+                        }}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
 

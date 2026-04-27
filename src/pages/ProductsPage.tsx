@@ -176,22 +176,14 @@ const ProductsPage: React.FC = () => {
 
         <div className="container mx-auto px-4 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold mb-4 text-gray-900 dark:text-white tracking-tight">
-              <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                Produk
-              </span>{" "}
-              Unggulan Kami
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
+              Produk
             </h1>
 
-            <div className="w-20 h-1 bg-gradient-to-r from-red-500 to-orange-500 mx-auto mb-6 rounded-full"></div>
+            <div className="w-20 h-1 bg-red-600 mx-auto mb-8 rounded-full"></div>
 
-            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-gray-600 dark:text-gray-300 mb-6 max-w-3xl mx-auto">
-              Jelajahi rangkaian lengkap{" "}
-              <span className="font-semibold text-red-600 dark:text-red-400">
-                peralatan pemadam kebakaran profesional
-              </span>{" "}
-              yang dirancang khusus untuk performa optimal dalam kondisi
-              ekstrem.
+            <p className="text-lg md:text-xl leading-relaxed text-gray-600 dark:text-gray-300 mb-10 max-w-4xl mx-auto font-medium">
+              Jelajahi katalog produk unggulan kami, mulai dari alat pemadam hingga sistem pendukung pendidikan keselamatan yang teruji dan tersertifikasi.
             </p>
 
             {/* Stats */}

@@ -16,6 +16,7 @@ export interface Category {
   slug: string;
   description?: string;
   imageUrl?: string;
+  children?: Category[];
 }
 
 export interface GalleryItem {

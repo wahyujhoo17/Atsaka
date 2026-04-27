@@ -8,9 +8,11 @@ import ProductsPage from "./pages/ProductsPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import GalleryPage from "./pages/GalleryPage";
 import ContactPage from "./pages/ContactPage";
+import CompanyPage from "./pages/CompanyPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ScrollToTop from "./components/common/ScrollToTop";
 import ArticlesPage from "./pages/ArticlesPage";
 import ArticleDetailPage from "./pages/ArticleDetailPage";
 
@@ -18,6 +20,7 @@ function App() {
   return (
     <ThemeProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ScrollToTop />
         <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
           <Routes>
             {/* Admin routes without navbar/footer */}
@@ -75,6 +78,18 @@ function App() {
                   <Navbar />
                   <main className="flex-grow">
                     <GalleryPage />
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+            <Route
+              path="/company"
+              element={
+                <>
+                  <Navbar />
+                  <main className="flex-grow">
+                    <CompanyPage />
                   </main>
                   <Footer />
                 </>
