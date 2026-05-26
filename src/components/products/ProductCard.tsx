@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Product } from "../../types";
-import { ArrowRight, Tag } from "lucide-react";
+import { ArrowRight, Tag, Eye } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -30,16 +30,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const getCategoryColor = (category: string) => {
     // Warna konsisten berdasarkan kategori
     const colorMap: Record<string, string> = {
-      "pump": "bg-blue-600/95 border border-blue-400/50",
-      "equipment": "bg-emerald-600/95 border border-emerald-400/50",
-      "aksesori": "bg-purple-600/95 border border-purple-400/50",
-      "accessory": "bg-purple-600/95 border border-purple-400/50",
-      "fire-extinguisher": "bg-red-600/95 border border-red-400/50",
-      "nozzle": "bg-amber-600/95 border border-amber-400/50",
-      "hose": "bg-cyan-600/95 border border-cyan-400/50",
-      "valve": "bg-indigo-600/95 border border-indigo-400/50",
-      "tools": "bg-emerald-600/95 border border-emerald-400/50",
-      "safety": "bg-green-600/95 border border-green-400/50"
+      "pump": "bg-blue-600/90",
+      "equipment": "bg-emerald-600/90",
+      "aksesori": "bg-purple-600/90",
+      "accessory": "bg-purple-600/90",
+      "fire-extinguisher": "bg-red-600/90",
+      "nozzle": "bg-amber-600/90",
+      "hose": "bg-cyan-600/90",
+      "valve": "bg-indigo-600/90",
+      "tools": "bg-emerald-600/90",
+      "safety": "bg-green-600/90"
     };
     
     const lowerCategory = category.toLowerCase();
@@ -48,18 +48,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
     
     // Default color for unknown categories
-    return "bg-gray-600/95 border border-gray-400/50";
+    return "bg-gray-600/90";
   };
 
   return (
     <Link
       to={`/products/${product.slug}`}
-      className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-600/30 transform hover:-translate-y-1 hover:scale-[1.02] flex flex-col"
+      className="product-card group bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-600/30 transform hover:-translate-y-1 hover:scale-[1.02] flex flex-col"
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      {/* Image Container */}
+      <div className="relative aspect-square sm:aspect-[4/3] overflow-hidden">
         <img
           srcSet={getSrcSet(product.imageUrl)}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
           src={product.imageUrl}
           alt={product.name}
           loading="lazy"
@@ -67,22 +68,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-50 group-hover:opacity-30 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent opacity-40 group-hover:opacity-20 transition-opacity duration-500" />
 
-        {/* Category badge */}
-        <div className="absolute top-4 left-4">
+        {/* Category badge - smaller on mobile */}
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-white text-xs font-bold tracking-wide shadow-lg backdrop-blur-md ${getCategoryColor(
+            className={`inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-white text-[10px] sm:text-xs font-bold tracking-wide shadow-lg backdrop-blur-md ${getCategoryColor(
               product.category
             )}`}
           >
-            <Tag className="w-3 h-3" />
+            <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 hidden sm:inline" />
             {getCategoryLabel(product.category)}
           </span>
         </div>
 
-        {/* Hover overlay with action button */}
-        <div className="absolute inset-0 bg-gradient-to-t from-red-600/85 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end">
+        {/* Mobile: small eye icon at bottom-right */}
+        <div className="absolute bottom-2 right-2 sm:hidden">
+          <div className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-md backdrop-blur-sm">
+            <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+          </div>
+        </div>
+
+        {/* Desktop: Hover overlay with action button */}
+        <div className="absolute inset-0 bg-gradient-to-t from-red-600/85 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 hidden sm:flex items-end">
           <div className="p-4 w-full">
             <div className="flex items-center justify-between text-white">
               <span className="text-sm font-medium">Lihat Detail</span>
@@ -92,16 +100,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </div>
 
-      <div className="p-5 flex-1 flex flex-col">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3 line-clamp-3 group-hover:text-red-600 transition-colors duration-300 leading-tight flex-shrink-0">
+      {/* Content - compact on mobile */}
+      <div className="p-2.5 sm:p-5 flex-1 flex flex-col">
+        <h3 className="text-xs sm:text-lg font-bold text-gray-900 dark:text-white mb-1 sm:mb-3 line-clamp-2 sm:line-clamp-3 group-hover:text-red-600 transition-colors duration-300 leading-snug sm:leading-tight flex-shrink-0">
           {product.name}
         </h3>
-        <p className="text-gray-600 dark:text-gray-300 line-clamp-3 leading-relaxed text-sm mb-4 flex-1">
+
+        {/* Description - hidden on mobile for compact look */}
+        <p className="hidden sm:block text-gray-600 dark:text-gray-300 line-clamp-3 leading-relaxed text-sm mb-4 flex-1">
           {product.description}
         </p>
 
-        {/* Additional visual element */}
-        <div className="pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
+        {/* Mobile: subtle category text */}
+        <div className="sm:hidden mt-auto">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">
+            Lihat Detail →
+          </span>
+        </div>
+
+        {/* Desktop: Additional visual element */}
+        <div className="hidden sm:block pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
               Produk Profesional

@@ -86,7 +86,7 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden sticky top-24">
+    <div className="bg-white dark:bg-gray-800 lg:shadow-lg rounded-xl lg:border border-gray-100 dark:border-gray-700 overflow-hidden lg:sticky lg:top-24">
       {/* Header */}
       <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
