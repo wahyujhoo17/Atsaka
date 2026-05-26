@@ -1,18 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Product } from "../../types";
-import { ArrowRight, Tag, Eye } from "lucide-react";
+import { ArrowRight, Tag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const getSrcSet = (baseUrl: string) => {
-    const sizes = [400, 800, 1200];
-    return sizes.map((size) => `${baseUrl}?w=${size} ${size}w`).join(", ");
-  };
-
   const getCategoryLabel = (category: string) => {
     if (!category) return "Produk";
     
@@ -59,8 +54,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Image Container */}
       <div className="relative aspect-square sm:aspect-[4/3] overflow-hidden">
         <img
-          srcSet={getSrcSet(product.imageUrl)}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
           src={product.imageUrl}
           alt={product.name}
           loading="lazy"
@@ -82,12 +75,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </span>
         </div>
 
-        {/* Mobile: small eye icon at bottom-right */}
-        <div className="absolute bottom-2 right-2 sm:hidden">
-          <div className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-md backdrop-blur-sm">
-            <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-          </div>
-        </div>
 
         {/* Desktop: Hover overlay with action button */}
         <div className="absolute inset-0 bg-gradient-to-t from-red-600/85 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 hidden sm:flex items-end">
