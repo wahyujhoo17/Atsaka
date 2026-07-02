@@ -71,7 +71,7 @@ const AboutSection: React.FC = () => {
           {/* Left Column: Tall Image (4 columns wide) */}
           <div className="lg:col-span-4 h-[300px] lg:h-[480px]">
             <img
-              src="https://images.pexels.com/photos/1205111/pexels-photo-1205111.jpeg"
+              src="/img/atsaka-manufaktur.png"
               alt="Manufaktur ATSAKA"
               className="w-full h-full object-cover"
               loading="lazy"
@@ -84,8 +84,8 @@ const AboutSection: React.FC = () => {
             {/* Top: Wide Image */}
             <div className="h-[200px] lg:h-[300px]">
               <img
-                src="https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg"
-                alt="Tim ATSAKA"
+                src="/img/atsaka-operasi.png"
+                alt="Operasi Tim ATSAKA"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
