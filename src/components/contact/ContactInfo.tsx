@@ -14,12 +14,12 @@ const ContactInfo: React.FC = () => {
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Lokasi Kantor</h4>
             <a 
-              href="https://www.google.com/maps/search/?api=1&query=PT+Indo+Atsaka+Industri+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
+              href="https://www.google.com/maps/search/?api=1&query=Atsaka+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors"
             >
-              <span className="font-semibold block text-gray-900 dark:text-white">PT Indo Atsaka Industri</span>
+              <span className="font-semibold block text-gray-900 dark:text-white">Atsaka</span>
               Jalan Raya Condet No.6 RT.: 02/RW.:, 01, RW.Kel:, Balekambang, Kec: Kramatjati, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13530
             </a>
           </div>

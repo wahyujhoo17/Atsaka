@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronUp } from 'lucide-react';
-import HeroSection from '../components/home/HeroSection';
-import AboutSection from '../components/home/AboutSection';
-import FeatureSection from '../components/home/FeatureSection';
-import MitraSection from '../components/home/MitraSection';
-import ProductHighlight from '../components/home/ProductHighlight';
-import ArticleSection from '../components/home/ArticleSection';
-import CallToAction from '../components/home/CallToAction';
-import PopupBanner from '../components/home/PopupBanner';
+import React, { useState, useEffect } from "react";
+import { ChevronUp } from "lucide-react";
+import HeroSection from "../components/home/HeroSection";
+import AboutSection from "../components/home/AboutSection";
+import FeatureSection from "../components/home/FeatureSection";
+import MitraSection from "../components/home/MitraSection";
+import ProductHighlight from "../components/home/ProductHighlight";
+import ArticleSection from "../components/home/ArticleSection";
+import CallToAction from "../components/home/CallToAction";
+import PopupBanner from "../components/home/PopupBanner";
 
-const WA_NUMBER = '628176454312';
+const WA_NUMBER = "6287888491949";
 
 const HomePage: React.FC = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -18,17 +18,19 @@ const HomePage: React.FC = () => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 300);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleWAClick = () => {
-    const message = encodeURIComponent('Halo ATSAKA, saya ingin berkonsultasi mengenai peralatan pemadam kebakaran hutan.');
-    window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
+    const message = encodeURIComponent(
+      "Halo ATSAKA, saya ingin berkonsultasi mengenai peralatan pemadam kebakaran hutan.",
+    );
+    window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, "_blank");
   };
 
   return (
@@ -67,7 +69,9 @@ const HomePage: React.FC = () => {
       <button
         onClick={scrollToTop}
         className={`fixed bottom-8 right-24 z-50 p-3 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all duration-300 ${
-          showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12 pointer-events-none'
+          showScrollButton
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-12 pointer-events-none"
         }`}
         aria-label="Scroll to top"
       >

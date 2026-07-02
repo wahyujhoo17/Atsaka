@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
               <span className="text-2xl font-bold tracking-tight text-white group-hover:text-red-500 transition-colors">ATSAKA</span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
-              Divisi unggulan dari PT Indo Atsaka Industri yang menyediakan solusi pemadam kebakaran hutan berkualitas tinggi dan berstandar internasional.
+              Divisi unggulan dari Atsaka yang menyediakan solusi pemadam kebakaran hutan berkualitas tinggi dan berstandar internasional.
             </p>
             <div className="flex space-x-3">
               {[
@@ -121,12 +121,12 @@ const Footer: React.FC = () => {
                   <MapPin className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
                 </div>
                 <a 
-                  href="https://www.google.com/maps/search/?api=1&query=PT+Indo+Atsaka+Industri+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
+                  href="https://www.google.com/maps/search/?api=1&query=Atsaka+Jalan+Raya+Condet+No.6+Balekambang+Kramatjati" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white transition-colors text-xs leading-relaxed"
                 >
-                  <span className="font-semibold block text-white mb-1">PT Indo Atsaka Industri</span>
+                  <span className="font-semibold block text-white mb-1">Atsaka</span>
                   Jalan Raya Condet No.6, Jakarta Timur
                 </a>
               </li>
@@ -149,7 +149,7 @@ const Footer: React.FC = () => {
         {/* Footer Bottom */}
         <div className="mt-16 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-gray-500 text-xs text-center md:text-left">
-            © {new Date().getFullYear()} ATSAKA - PT Indo Atsaka Industri. Hak cipta dilindungi undang-undang.
+            © {new Date().getFullYear()} ATSAKA. Hak cipta dilindungi undang-undang.
           </p>
           <div className="flex space-x-6 text-xs">
             <Link to="#" className="text-gray-500 hover:text-white transition-colors">Kebijakan Privasi</Link>

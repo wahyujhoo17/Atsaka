@@ -1,20 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { MessageCircle, ArrowRight, ShieldCheck, BadgeCheck, Star } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import {
+  MessageCircle,
+  ArrowRight,
+  ShieldCheck,
+  BadgeCheck,
+  Star,
+} from "lucide-react";
 
-const WA_NUMBER = '628176454312';
+const WA_NUMBER = "6287888491949";
 
 const pillars = [
   {
-    title: 'Produk Lokal',
-    subtitle: 'Berkualitas International',
+    title: "Produk Lokal",
+    subtitle: "Berkualitas International",
   },
   {
-    title: 'Standar Teruji',
-    subtitle: 'Kualitas Terjamin',
+    title: "Standar Teruji",
+    subtitle: "Kualitas Terjamin",
   },
   {
-    title: 'Bersertifikasi',
-    subtitle: 'Sesuai Ketentuan',
+    title: "Bersertifikasi",
+    subtitle: "Sesuai Ketentuan",
   },
 ];
 
@@ -29,8 +35,10 @@ const HeroSection: React.FC = () => {
   }, []);
 
   const handleWAConsultation = () => {
-    const message = encodeURIComponent('Halo ATSAKA, saya ingin konsultasi mengenai peralatan pemadam kebakaran hutan.');
-    window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
+    const message = encodeURIComponent(
+      "Halo ATSAKA, saya ingin konsultasi mengenai peralatan pemadam kebakaran hutan.",
+    );
+    window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, "_blank");
   };
 
   return (
@@ -51,7 +59,9 @@ const HeroSection: React.FC = () => {
         <div className="container mx-auto px-4 pt-20 md:pt-32 pb-12 md:pb-0">
           <div
             className={`transition-all duration-1000 transform ${
-              isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
             }`}
           >
             {/* Top Content: Badge, Headline, Text */}
@@ -63,19 +73,21 @@ const HeroSection: React.FC = () => {
 
               {/* Main Headline */}
               <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.2] md:leading-[1.1] mb-4 md:mb-6 tracking-tight">
-                Manufaktur Peralatan<br className="hidden md:block" />
+                Manufaktur Peralatan
+                <br className="hidden md:block" />
                 Pemadam Kebakaran
               </h1>
 
               {/* Sub Headline */}
               <p className="text-[13px] sm:text-base md:text-lg text-gray-300 mb-8 md:mb-12 leading-relaxed max-w-2xl font-light">
-                Menghadirkan rangkaian alat pemadam kebakaran hutan berbasis produk lokal dengan kualitas internasional untuk mendukung efektivitas dan kesiapan tim Anda.
+                Menghadirkan rangkaian alat pemadam kebakaran hutan berbasis
+                produk lokal dengan kualitas internasional untuk mendukung
+                efektivitas dan kesiapan tim Anda.
               </p>
             </div>
 
             {/* Bottom Content: Buttons (Left) & Pillars (Right) */}
             <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-end gap-10 md:gap-12 mt-4">
-              
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <a
@@ -112,7 +124,6 @@ const HeroSection: React.FC = () => {
                   </React.Fragment>
                 ))}
               </div>
-
             </div>
           </div>
         </div>
