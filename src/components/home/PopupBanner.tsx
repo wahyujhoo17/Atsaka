@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, MessageCircle, Flame } from "lucide-react";
 
-const WA_NUMBER = "6287888491949";
+const WA_NUMBER = "628176454312";
 
 const PopupBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);

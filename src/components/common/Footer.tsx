@@ -134,7 +134,7 @@ const Footer: React.FC = () => {
                 <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600 transition-colors">
                   <Phone className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
                 </div>
-                <a href="tel:08176454312" className="text-gray-400 hover:text-white transition-colors text-xs">08176454312</a>
+                <a href="tel:+628176454312" className="text-gray-400 hover:text-white transition-colors text-xs">+62 817-6454-312</a>
               </li>
               <li className="flex items-center space-x-3 group">
                 <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600 transition-colors">

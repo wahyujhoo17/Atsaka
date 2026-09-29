@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 
 const CompanyPage: React.FC = () => {
   const handleWAClick = () => {
-    const phoneNumber = "6287888491949";
+    const phoneNumber = "628176454312";
     const message = "Halo ATSAKA, saya ingin meminta penawaran produk.";
     window.open(
       `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,

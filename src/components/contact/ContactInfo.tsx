@@ -31,7 +31,7 @@ const ContactInfo: React.FC = () => {
           </div>
           <div>
             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Telepon</h4>
-            <a href="tel:08176454312" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors">08176454312</a>
+            <a href="tel:+628176454312" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors">+62 817-6454-312</a>
           </div>
         </div>
         

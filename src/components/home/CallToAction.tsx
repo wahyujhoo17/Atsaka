@@ -2,7 +2,7 @@ import React from "react";
 import { MessageCircle, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const WA_NUMBER = "6287888491949";
+const WA_NUMBER = "628176454312";
 
 const stats = [
   { value: "3.500+", label: "Intervensi Kebakaran" },

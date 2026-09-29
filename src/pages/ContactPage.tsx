@@ -6,7 +6,7 @@ import ContactInfo from "../components/contact/ContactInfo";
 const ContactPage: React.FC = () => {
   const handleWhatsAppClick = () => {
     // Nomor WhatsApp perusahaan
-    const phoneNumber = "6287888491949"; // Format: 62 (kode negara) + nomor tanpa 0 di depan
+    const phoneNumber = "628176454312"; // Format: 62 (kode negara) + nomor tanpa 0 di depan
     const message =
       "Halo, saya tertarik dengan produk ATSAKA. Bisakah Anda memberikan informasi lebih lanjut?";
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(

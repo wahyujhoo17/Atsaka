@@ -9,7 +9,7 @@ import ArticleSection from "../components/home/ArticleSection";
 import CallToAction from "../components/home/CallToAction";
 import PopupBanner from "../components/home/PopupBanner";
 
-const WA_NUMBER = "6287888491949";
+const WA_NUMBER = "628176454312";
 
 const HomePage: React.FC = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
