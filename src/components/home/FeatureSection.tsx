@@ -1,30 +1,13 @@
 import React, { useRef, useEffect } from 'react';
-import { Package, Shield, Award } from 'lucide-react';
+import { HomepageContent } from '../../data/homepageContent';
+import { getContentIcon } from '../../lib/contentIcons';
+import { highlightText } from '../../lib/highlightText';
 
-const features = [
-  {
-    icon: <Package className="w-10 h-10 text-red-500" />,
-    title: 'Material Berstandar Internasional',
-    description:
-      'Menggunakan material berkualitas tinggi dengan desain portable, memastikan performa optimal dan kemudahan penggunaan di berbagai kondisi lapangan.',
-  },
-  {
-    icon: <Shield className="w-10 h-10 text-red-500" />,
-    title: 'Kualitas Teruji & Tersertifikasi',
-    description:
-      'Lolos Uji Lab Damkar DKI yang bersertifikasi SNI, dan memiliki TKDN. Telah lolos juga Matching Test HPPI Pusat (OEM Honda), kami menjamin performa alat yang sesuai dengan standar tertinggi industri.',
-    highlight: 'Matching Test HPPI Pusat (OEM Honda)',
-  },
-  {
-    icon: <Award className="w-10 h-10 text-red-500" />,
-    title: 'Garansi & Dukungan Spare Part',
-    description:
-      'Garansi Engine 1 Tahun dan jaminan ketersediaan Sparepart 2 Tahun. Kami memastikan alat Anda selalu siap tempur dengan dukungan teknis yang cepat dan mudah diakses.',
-    highlight: 'Garansi Engine 1 Tahun',
-  },
-];
+interface FeatureSectionProps {
+  content: HomepageContent['features'];
+}
 
-const FeatureSection: React.FC = () => {
+const FeatureSection: React.FC<FeatureSectionProps> = ({ content }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -45,67 +28,47 @@ const FeatureSection: React.FC = () => {
       if (feature) observer.observe(feature);
     });
 
-    return () => {
-      if (sectionRef.current) observer.unobserve(sectionRef.current);
-      featuresRef.current.forEach((feature) => {
-        if (feature) observer.unobserve(feature);
-      });
-    };
-  }, []);
+    return () => observer.disconnect();
+  }, [content.items.length]);
 
   return (
     <section
       ref={sectionRef}
-      className="py-24 bg-gray-900 opacity-0 transition-opacity duration-1000 ease-in-out relative overflow-hidden"
+      className="py-16 md:py-28 bg-gray-950 opacity-0 transition-opacity duration-1000 ease-in-out relative overflow-hidden"
     >
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-red-600/5 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-red-600/10 blur-[100px] rounded-full"></div>
-
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-5 md:px-4 relative z-10">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <div className="inline-flex items-center gap-2 bg-red-600/20 text-red-400 text-sm font-bold px-4 py-1.5 rounded-full mb-6 tracking-widest uppercase">
-            Kenapa Harus ATSAKA
-          </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-tight">
-            Keunggulan Manufaktur Kami
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-16 mb-8 md:mb-20 items-end">
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
+            {highlightText(content.headline, 'text-red-600')}
           </h2>
-          <div className="w-20 h-1.5 bg-red-600 mx-auto rounded-full" />
+          <p className="text-gray-400 text-[15px] md:text-lg leading-relaxed">{content.subheadline}</p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              ref={(el) => (featuresRef.current[index] = el)}
-              className="group relative bg-white/5 backdrop-blur-md rounded-3xl p-7 md:p-10 border border-white/10 hover:border-red-500/50 transform transition-all duration-500 opacity-0 translate-y-12 shadow-2xl hover:-translate-y-2"
-              style={{ transitionDelay: `${index * 150}ms` }}
-            >
-              {/* Glow effect on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:from-red-600/5 group-hover:to-transparent rounded-3xl transition-all duration-500"></div>
-
-              {/* Icon Container */}
-              <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-red-600 to-red-800 rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg shadow-red-900/40 group-hover:scale-110 transition-transform duration-500">
-                <div className="text-white">
-                  {React.cloneElement(feature.icon as React.ReactElement, { className: "w-8 h-8 md:w-10 md:h-10" })}
+        {/* Feature Cards: compact icon rows on phones, numbered columns from tablet up */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:border-t border-white/10">
+          {content.items.map((item, index) => {
+            const Icon = getContentIcon(item.icon);
+            return (
+              <div
+                key={`${item.title}-${index}`}
+                ref={(el) => (featuresRef.current[index] = el)}
+                className="group relative flex gap-4 py-5 border-b last:border-b-0 sm:block sm:border-b-0 sm:pt-10 sm:pb-8 sm:pr-8 lg:px-8 lg:first:pl-0 lg:border-l lg:first:border-l-0 border-white/10 transition-all duration-700 opacity-0 translate-y-8"
+                style={{ transitionDelay: `${index * 150}ms` }}
+              >
+                {/* Red accent line that extends on hover */}
+                <span className="hidden sm:block absolute top-0 left-0 lg:left-8 lg:group-first:left-0 h-0.5 w-10 bg-red-600 transition-all duration-500 group-hover:w-20" />
+                <div className="hidden sm:block text-gray-600 text-sm font-mono mb-6">{String(index + 1).padStart(2, '0')}</div>
+                <div className="shrink-0 w-11 h-11 rounded-xl bg-red-600/10 flex items-center justify-center sm:w-auto sm:h-auto sm:bg-transparent sm:rounded-none sm:block sm:mb-6">
+                  <Icon className="w-5 h-5 sm:w-9 sm:h-9 text-red-500" strokeWidth={1.5} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-xl font-bold text-white mb-1 sm:mb-3">{item.title}</h3>
+                  <p className="text-sm sm:text-base text-gray-400 leading-relaxed">{item.description}</p>
                 </div>
               </div>
-
-              <div className="relative">
-                <div className="text-red-500 font-black text-5xl md:text-6xl opacity-5 absolute -top-4 -right-2">
-                  0{index + 1}
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-white group-hover:text-red-400 transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-400 text-base md:text-lg leading-relaxed group-hover:text-gray-300 transition-colors">
-                  {feature.description}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

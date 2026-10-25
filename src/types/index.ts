@@ -1,3 +1,6 @@
+import { SpecificationsData } from "../lib/specGroups";
+import { ProductDetails } from "../lib/productDetails";
+
 export interface Product {
   id: string;
   name: string;
@@ -7,7 +10,9 @@ export interface Product {
   features: string[];
   imageUrl: string;
   imageUrls: string[];
-  specifications: { [key: string]: string };
+  specifications: SpecificationsData;
+  subtitle?: string | null;
+  details?: ProductDetails | null;
 }
 
 export interface Category {
@@ -16,6 +21,7 @@ export interface Category {
   slug: string;
   description?: string;
   imageUrl?: string;
+  parentId?: string | null;
   children?: Category[];
 }
 

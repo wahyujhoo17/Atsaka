@@ -23,31 +23,37 @@ const Navbar: React.FC = () => {
 
   const navLinks = [
     { name: "Beranda", path: "/" },
-    { name: "Produk", path: "/products" },
-    { 
-      name: "Company", 
-      path: "/company",
+    {
+      name: "Pompa Pemadam",
+      path: "/products?category=pompa",
       subLinks: [
-        { name: "About Us", path: "/company#about" },
-        { name: "History", path: "/company#history" },
-        { name: "Certificates", path: "/company#certificates" },
-        { name: "Customer", path: "/company#customer" },
+        { name: "Mini Pump", path: "/products?category=pompa-mini" },
+        { name: "Middle Pump", path: "/products?category=pompa-middle" },
+        { name: "Master Pump", path: "/products?category=pompa-master" },
+        { name: "Floating Pump", path: "/products?category=pompa-floating" },
       ]
     },
-    { name: "Artikel", path: "/articles" },
-    { name: "Kontak", path: "/contact" },
+    { name: "Kelengkapan Pemadam", path: "/products?category=aksesoris" },
+    { name: "About Us", path: "/company" },
   ];
 
+  // Navbar always sits on a dark bar (DJI-style reference), so links are light
   const baseLinkClasses =
-    "relative font-medium transition-colors duration-300 ease-in-out group py-1";
+    "relative text-[15px] font-normal transition-colors duration-300 ease-in-out group py-1";
   const scrolledOrNotHomeLinkClasses = // Styles for when scrolled OR not on homepage
-    "text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400";
+    "text-gray-200 hover:text-white";
   const topHomeLinkClasses = // Styles for when at the top of the homepage
-    "text-white dark:text-white hover:text-white dark:hover:text-white";
-  const activeLinkClasses = "text-red-600 dark:text-red-400"; // Active state color remains red
+    "text-white hover:text-white";
+  const activeLinkClasses = "text-white"; // Active state marked by the red underline
 
   const underlineClasses =
     "after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-red-500 after:transition-all after:duration-300 group-hover:after:w-full";
+
+  // NavLink ignores the query string, so links like /products?category=x need an extra check
+  const matchesQuery = (path: string) => {
+    const query = path.split("?")[1];
+    return !query || location.search === `?${query}`;
+  };
 
   // Function to determine link classes based on active state, scroll state, and current page
   const getLinkClassName = ({ isActive }: { isActive: boolean }): string => {
@@ -69,30 +75,16 @@ const Navbar: React.FC = () => {
     return `${baseLinkClasses} ${underlineClasses} ${linkColorClasses}`;
   };
 
-  // Determine logo text color based on scroll or if not on homepage
-  const logoTextColorClass =
-    isScrolled || !isHomePage
-      ? "text-gray-900 dark:text-white" // Darker text if scrolled or not homepage
-      : "text-white"; // Lighter text only at top of homepage
+  const logoTextColorClass = "text-white";
 
-  // Determine button color based on scroll or if not on homepage
-  const buttonColorClasses = (isThemeButton: boolean = false) => {
-    if (isScrolled || !isHomePage) {
-      // Scrolled or Not Homepage colors
-      return isThemeButton
-        ? "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 focus:ring-red-500 dark:focus:ring-offset-gray-950"
-        : "text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 focus:ring-red-500 dark:focus:ring-offset-gray-950"; // Hamburger uses slightly different text color
-    } else {
-      // Top of Homepage colors
-      return "text-white hover:bg-white/20 dark:text-white dark:hover:bg-white/20 focus:ring-white focus:ring-offset-black/20";
-    }
-  };
+  const buttonColorClasses =
+    "text-white hover:bg-white/15 focus:ring-white/60 focus:ring-offset-transparent";
 
   // Determine Navbar background based on scroll or if not on homepage
   const navBackgroundClass =
     isScrolled || !isHomePage
-      ? "bg-white dark:bg-gray-950 shadow-md py-3" // Solid background if scrolled or not homepage
-      : "bg-transparent backdrop-blur-sm py-4"; // Transparent only at top of homepage
+      ? "bg-[#14151f]/95 backdrop-blur-md shadow-lg py-2" // Solid dark bar if scrolled or not homepage
+      : "bg-transparent py-4"; // Transparent only at top of homepage
 
   return (
     <nav
@@ -105,15 +97,20 @@ const Navbar: React.FC = () => {
             alt="ATSAKA Logo" // Added alt text
             className="w-9 h-9 transition-transform duration-300 group-hover:scale-110"
           />
-          <span
-            className={`text-2xl font-semibold transition-colors duration-300 ${logoTextColorClass}`}
-          >
-            ATSAKA
+          <span className="flex flex-col leading-none">
+            <span
+              className={`text-2xl font-bold tracking-[0.12em] transition-colors duration-300 ${logoTextColorClass}`}
+            >
+              ATSAKA
+            </span>
+            <span className="mt-1 text-[9px] font-medium tracking-[0.25em] uppercase text-gray-300">
+              Kuat · Kuasa · Merdeka
+            </span>
           </span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-7 lg:space-x-9">
+        <div className="hidden lg:flex items-center space-x-8 xl:space-x-10">
           {navLinks.map((link) => {
             const isHashLink = link.path.startsWith('/#');
             const hasSubLinks = 'subLinks' in link && link.subLinks;
@@ -123,34 +120,32 @@ const Navbar: React.FC = () => {
                 <div key={link.name} className="relative group">
                   <NavLink
                     to={link.path}
-                    className={({ isActive }) => `${getLinkClassName({ isActive })} flex items-center gap-1`}
+                    className={({ isActive }) =>
+                      `${getLinkClassName({
+                        isActive:
+                          isActive &&
+                          (matchesQuery(link.path) ||
+                            !!link.subLinks?.some((sub) => matchesQuery(sub.path))),
+                      })} flex items-center gap-1`
+                    }
                   >
                     {link.name}
                     <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
                   </NavLink>
                   
                   {/* Dropdown Menu */}
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                  <div className="absolute top-full left-0 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                   <div className="w-52 py-2 bg-[#222222] rounded-2xl shadow-xl border border-white/10 overflow-hidden">
                     {link.subLinks?.map((sub) => (
                       <Link
                         key={sub.name}
                         to={sub.path}
-                        className="block px-6 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                        onClick={() => {
-                          if (location.pathname === '/company' && sub.path.includes('#')) {
-                            const targetId = sub.path.split('#')[1];
-                            const element = document.getElementById(targetId);
-                            if (element) {
-                              const top = element.getBoundingClientRect().top + window.scrollY - 80;
-                              window.scrollTo({ top, behavior: 'smooth' });
-                              window.history.pushState(null, '', sub.path);
-                            }
-                          }
-                        }}
+                        className="block px-6 py-3 text-sm text-gray-200 hover:bg-white/5 hover:text-red-400 transition-colors"
                       >
                         {sub.name}
                       </Link>
                     ))}
+                   </div>
                   </div>
                 </div>
               );
@@ -179,27 +174,23 @@ const Navbar: React.FC = () => {
               <NavLink
                 key={link.name}
                 to={link.path}
-                className={getLinkClassName}
+                className={({ isActive }) =>
+                  getLinkClassName({ isActive: isActive && matchesQuery(link.path) })
+                }
                 end={link.path === "/"}
-                onClick={() => {
-                  if (link.name === "Produk" && location.pathname === "/products") {
-                    // Force a "refresh" of the products page state if already there
-                    if (location.search !== "") {
-                      // Navigate to /products without query params
-                    }
-                  }
-                }}
               >
                 {link.name}
               </NavLink>
             );
           })}
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden lg:flex items-center gap-3">
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses(
-              true
-            )}`}
+            className={`p-2 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses}`}
             aria-label={
               themeMode === "dark"
                 ? "Switch to light mode"
@@ -212,16 +203,20 @@ const Navbar: React.FC = () => {
               <Moon className="w-5 h-5" />
             )}
           </button>
+          <Link
+            to="/contact"
+            className="px-5 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+          >
+            Hubungi Kami
+          </Link>
         </div>
 
         {/* Mobile Menu Buttons */}
-        <div className="flex items-center space-x-2 md:hidden">
+        <div className="flex items-center space-x-2 lg:hidden">
           {/* Theme Toggle Button (Mobile) */}
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses(
-              true
-            )}`}
+            className={`p-2 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses}`}
             aria-label={
               themeMode === "dark"
                 ? "Switch to light mode"
@@ -238,9 +233,7 @@ const Navbar: React.FC = () => {
           {/* Hamburger Button */}
           <button
             onClick={toggleMenu}
-            className={`p-2 rounded-md transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses(
-              false
-            )}`}
+            className={`p-2 rounded-md transition-all duration-300 ease-in-out hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColorClasses}`}
             aria-label="Toggle menu"
             aria-expanded={isMenuOpen}
           >
@@ -255,7 +248,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu Panel */}
       <div
-        className={`absolute top-full left-0 w-full bg-white dark:bg-gray-950 shadow-2xl transition-all duration-300 ease-out md:hidden origin-top border-t border-gray-100 dark:border-gray-800 ${
+        className={`absolute top-full left-0 w-full max-h-[calc(100vh-4rem)] overflow-y-auto bg-white dark:bg-gray-950 shadow-2xl transition-all duration-300 ease-out lg:hidden origin-top border-t border-gray-100 dark:border-gray-800 ${
           isMenuOpen
             ? "opacity-100 scale-y-100 visible"
             : "opacity-0 scale-y-95 invisible"
@@ -292,7 +285,7 @@ const Navbar: React.FC = () => {
                     to={link.path}
                     className={({ isActive }) =>
                       `flex items-center px-4 py-4 rounded-xl text-base font-bold transition-all duration-200 ${
-                        isActive
+                        isActive && matchesQuery(link.path)
                           ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                           : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400"
                       }`
@@ -312,18 +305,7 @@ const Navbar: React.FC = () => {
                         key={`mobile-sub-${sub.name}`}
                         to={sub.path}
                         className="px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-red-600 dark:hover:text-red-400 transition-all"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          if (location.pathname === '/company' && sub.path.includes('#')) {
-                            const targetId = sub.path.split('#')[1];
-                            const element = document.getElementById(targetId);
-                            if (element) {
-                              const top = element.getBoundingClientRect().top + window.scrollY - 80;
-                              window.scrollTo({ top, behavior: 'smooth' });
-                              window.history.pushState(null, '', sub.path);
-                            }
-                          }
-                        }}
+                        onClick={() => setIsMenuOpen(false)}
                       >
                         {sub.name}
                       </Link>

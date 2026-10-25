@@ -18,7 +18,12 @@ import {
   Upload,
   Loader,
   FileText,
+  Home,
 } from "lucide-react";
+import HomepageEditor from "../components/admin/HomepageEditor";
+import SpecGroupsEditor from "../components/admin/SpecGroupsEditor";
+import ProductDetailsEditor from "../components/admin/ProductDetailsEditor";
+import { cleanSpecGroups, toSpecGroups } from "../lib/specGroups";
 
 interface Product {
   id: string;
@@ -30,6 +35,7 @@ interface Product {
   imageUrl: string;
   imageUrls: string[];
   specifications: any;
+  subtitle?: string | null;
 }
 
 interface Category {
@@ -67,8 +73,8 @@ interface Article {
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "products" | "categories" | "gallery" | "articles"
-  >("products");
+    "homepage" | "products" | "categories" | "gallery" | "articles"
+  >("homepage");
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -79,8 +85,6 @@ const AdminPage: React.FC = () => {
   const [formData, setFormData] = useState<any>({});
   const [featureInput, setFeatureInput] = useState("");
   const [imageUrlInput, setImageUrlInput] = useState("");
-  const [specKey, setSpecKey] = useState("");
-  const [specValue, setSpecValue] = useState("");
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const [selectCategoryValue, setSelectCategoryValue] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -108,6 +112,11 @@ const AdminPage: React.FC = () => {
   };
 
   const fetchData = async () => {
+    // The homepage editor loads its own content
+    if (activeTab === "homepage") {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       if (activeTab === "products") {
@@ -148,8 +157,6 @@ const AdminPage: React.FC = () => {
     setEditingItem(null);
     setFeatureInput("");
     setImageUrlInput("");
-    setSpecKey("");
-    setSpecValue("");
     if (activeTab === "products") {
       setFormData({
         name: "",
@@ -159,7 +166,9 @@ const AdminPage: React.FC = () => {
         features: [],
         imageUrl: "",
         imageUrls: [],
-        specifications: {},
+        specifications: [{ title: "", items: [{ label: "", value: "" }] }],
+        subtitle: "",
+        details: {},
       });
     } else if (activeTab === "categories") {
       setFormData({
@@ -208,7 +217,7 @@ const AdminPage: React.FC = () => {
     } else if (activeTab === "products") {
       // Hanya ambil field yang sesuai dengan skema Product
       const { categories, ...productData } = item;
-      setFormData({ ...productData });
+      setFormData({ ...productData, specifications: toSpecGroups(productData.specifications) });
     } else {
       // Untuk categories, langsung copy item
       setFormData({ ...item });
@@ -216,8 +225,6 @@ const AdminPage: React.FC = () => {
     
     setFeatureInput("");
     setImageUrlInput("");
-    setSpecKey("");
-    setSpecValue("");
     setShowModal(true);
   };
 
@@ -331,10 +338,14 @@ const AdminPage: React.FC = () => {
 
     try {
       if (activeTab === "products") {
+        const productData = {
+          ...formData,
+          specifications: cleanSpecGroups(formData.specifications || []),
+        };
         if (editingItem) {
-          await api.updateProduct(editingItem.id, formData);
+          await api.updateProduct(editingItem.id, productData);
         } else {
-          await api.createProduct(formData);
+          await api.createProduct(productData);
         }
       } else if (activeTab === "categories") {
         await api.createCategory(formData);
@@ -480,12 +491,47 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Categories in tree order with their depth (any nesting level).
+  // `excludeId` drops that category and its descendants, so a category can't become its own parent.
+  const categoryTree = (excludeId?: string) => {
+    const result: { category: Category; depth: number }[] = [];
+    const walk = (parentId: string | null, depth: number) => {
+      categories
+        .filter((cat) => (cat.parentId || null) === parentId && cat.id !== excludeId)
+        .forEach((cat) => {
+          result.push({ category: cat, depth });
+          walk(cat.id, depth + 1);
+        });
+    };
+    walk(null, 0);
+    return result;
+  };
+
+  const drawerLabel =
+    activeTab === "products"
+      ? "Produk"
+      : activeTab === "categories"
+        ? "Kategori"
+        : activeTab === "gallery"
+          ? "Item Gallery"
+          : "Artikel";
+
+  useEffect(() => {
+    if (!showModal) return;
+    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && closeModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showModal]);
+
   const closeModal = () => {
     setShowModal(false);
     setFeatureInput("");
     setImageUrlInput("");
-    setSpecKey("");
-    setSpecValue("");
     setFormData({});
     setEditingItem(null);
   };
@@ -526,7 +572,18 @@ const AdminPage: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab("homepage")}
+              className={`${
+                activeTab === "homepage"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+            >
+              <Home className="w-5 h-5" />
+              Homepage
+            </button>
             <button
               onClick={() => setActiveTab("products")}
               className={`${
@@ -574,6 +631,9 @@ const AdminPage: React.FC = () => {
           </nav>
         </div>
 
+        {activeTab === "homepage" && <HomepageEditor />}
+
+        {activeTab !== "homepage" && (<>
         {/* Add Button */}
         <div className="mb-6">
           <button
@@ -833,33 +893,42 @@ const AdminPage: React.FC = () => {
             </div>
           )}
         </div>
+        </>)}
       </main>
 
-      {/* Modal */}
+      {/* Edit drawer: slides in from the right so long forms get the full screen height */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`bg-white dark:bg-gray-800 rounded-lg ${activeTab === 'articles' ? 'max-w-5xl' : 'max-w-2xl'} w-full max-h-[95vh] overflow-y-auto transition-all duration-300`}>
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {editingItem ? "Edit" : "Tambah"}{" "}
-                  {activeTab === "products"
-                    ? "Product"
-                    : activeTab === "categories"
-                      ? "Category"
-                      : activeTab === "gallery"
-                        ? "Gallery Item"
-                        : "Article"}
+        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
+          <div
+            className="absolute inset-0 bg-gray-950/50 backdrop-blur-[2px] animate-[fadeIn_0.2s_ease-out]"
+            onClick={closeModal}
+          />
+          <div
+            className={`relative h-full w-full ${
+              activeTab === "articles" ? "max-w-5xl" : activeTab === "products" ? "max-w-4xl" : "max-w-xl"
+            } bg-white dark:bg-gray-800 shadow-2xl flex flex-col animate-[slideInRight_0.3s_cubic-bezier(0.22,1,0.36,1)]`}
+          >
+            <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  {editingItem ? "Edit" : "Tambah"} {drawerLabel}
+                </p>
+                <h2 className="mt-0.5 text-xl font-bold text-gray-900 dark:text-white truncate">
+                  {formData.name || formData.title || `${drawerLabel} baru`}
                 </h2>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                >
-                  <X className="w-6 h-6" />
-                </button>
               </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-2 -mr-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                aria-label="Tutup"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
                 {activeTab === "articles" && (
                   <>
                     <div>
@@ -986,6 +1055,10 @@ const AdminPage: React.FC = () => {
 
                 {activeTab === "products" && (
                   <>
+                    <div className="pt-2 first:pt-0 border-t first:border-t-0 border-gray-100 dark:border-gray-700/60">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white pt-4">Informasi Dasar</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Name
@@ -1018,6 +1091,24 @@ const AdminPage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Sub Judul <span className="font-normal text-gray-400">(opsional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.subtitle || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, subtitle: e.target.value })
+                        }
+                        placeholder="mis. Mini Portable High-Pressure Fire Pump"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Tampil di bawah nama produk pada kartu dan hero homepage.
+                      </p>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Category
@@ -1031,18 +1122,13 @@ const AdminPage: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         <option value="">Pilih Category</option>
-                        {categories
-                          .filter((cat) => !cat.parentId)
-                          .map((cat) => (
-                            <React.Fragment key={cat.id}>
-                              <option value={cat.slug}>{cat.name}</option>
-                              {cat.children?.map((child) => (
-                                <option key={child.id} value={child.slug}>
-                                  &nbsp;&nbsp;↳ {child.name}
-                                </option>
-                              ))}
-                            </React.Fragment>
-                          ))}
+                        {categoryTree().map(({ category, depth }) => (
+                          <option key={category.id} value={category.slug}>
+                            {"\u00A0\u00A0\u00A0".repeat(depth)}
+                            {depth > 0 ? "↳ " : ""}
+                            {category.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -1062,6 +1148,10 @@ const AdminPage: React.FC = () => {
                       />
                     </div>
 
+                    <div className="pt-2 first:pt-0 border-t first:border-t-0 border-gray-100 dark:border-gray-700/60">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white pt-4">Gambar Produk</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gambar utama dipakai di kartu & hero homepage; gunakan PNG/WebP transparan.</p>
+                    </div>
                     {/* Main Image */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1118,7 +1208,7 @@ const AdminPage: React.FC = () => {
 
                         {/* OR use URL */}
                         <input
-                          type="url"
+                          type="text"
                           value={formData.imageUrl || ""}
                           onChange={(e) =>
                             setFormData({
@@ -1207,7 +1297,7 @@ const AdminPage: React.FC = () => {
 
                           {/* URL Input */}
                           <input
-                            type="url"
+                            type="text"
                             value={imageUrlInput}
                             onChange={(e) => setImageUrlInput(e.target.value)}
                             onKeyPress={(e) => {
@@ -1281,6 +1371,9 @@ const AdminPage: React.FC = () => {
                       </div>
                     </div>
 
+                    <div className="pt-2 first:pt-0 border-t first:border-t-0 border-gray-100 dark:border-gray-700/60">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white pt-4">Fitur Unggulan</h3>
+                    </div>
                     {/* Features Array */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1362,101 +1455,25 @@ const AdminPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Specifications Object */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Specifications
-                      </label>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={specKey}
-                            onChange={(e) => setSpecKey(e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                            placeholder="Key (e.g., Model)"
-                          />
-                          <input
-                            type="text"
-                            value={specValue}
-                            onChange={(e) => setSpecValue(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (specKey.trim() && specValue.trim()) {
-                                  setFormData({
-                                    ...formData,
-                                    specifications: {
-                                      ...(formData.specifications || {}),
-                                      [specKey.trim()]: specValue.trim(),
-                                    },
-                                  });
-                                  setSpecKey("");
-                                  setSpecValue("");
-                                }
-                              }
-                            }}
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                            placeholder="Value (Enter to add)"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (specKey.trim() && specValue.trim()) {
-                                setFormData({
-                                  ...formData,
-                                  specifications: {
-                                    ...(formData.specifications || {}),
-                                    [specKey.trim()]: specValue.trim(),
-                                  },
-                                });
-                                setSpecKey("");
-                                setSpecValue("");
-                              }
-                            }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {formData.specifications &&
-                          Object.keys(formData.specifications).length > 0 && (
-                            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-1">
-                              {Object.entries(formData.specifications).map(
-                                ([key, value], index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center gap-2 text-sm"
-                                  >
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                                      {key}:
-                                    </span>
-                                    <span className="flex-1 text-gray-600 dark:text-gray-400">
-                                      {String(value)}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newSpecs = {
-                                          ...formData.specifications,
-                                        };
-                                        delete newSpecs[key];
-                                        setFormData({
-                                          ...formData,
-                                          specifications: newSpecs,
-                                        });
-                                      }}
-                                      className="text-red-600 hover:text-red-800"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          )}
-                      </div>
+                    <div className="pt-2 first:pt-0 border-t first:border-t-0 border-gray-100 dark:border-gray-700/60">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white pt-4">Halaman Detail Produk</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Opsional. Bagian yang kosong tidak ditampilkan di halaman detail.</p>
                     </div>
+                    <ProductDetailsEditor
+                      details={formData.details}
+                      onChange={(details) => setFormData({ ...formData, details })}
+                    />
+
+                    <div className="pt-2 first:pt-0 border-t first:border-t-0 border-gray-100 dark:border-gray-700/60">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white pt-4">Spesifikasi Teknis</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelompokkan bebas dengan sub judul. Beri ★ pada baris yang ditonjolkan di kartu & hero. Enter di kolom nilai terakhir menambah baris.</p>
+                    </div>
+                    <SpecGroupsEditor
+                      groups={formData.specifications || []}
+                      onChange={(specifications) =>
+                        setFormData({ ...formData, specifications })
+                      }
+                    />
                   </>
                 )}
 
@@ -1567,7 +1584,7 @@ const AdminPage: React.FC = () => {
 
                         {/* Alternative: URL Input */}
                         <input
-                          type="url"
+                          type="text"
                           value={formData.imageUrl || ""}
                           onChange={(e) =>
                             setFormData({
@@ -1602,16 +1619,13 @@ const AdminPage: React.FC = () => {
                         <option value="">
                           -- Tidak ada parent (Top Level) --
                         </option>
-                        {categories
-                          .filter(
-                            (cat) =>
-                              !cat.parentId && cat.id !== editingItem?.id,
-                          )
-                          .map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
+                        {categoryTree(editingItem?.id).map(({ category, depth }) => (
+                          <option key={category.id} value={category.id}>
+                            {"\u00A0\u00A0\u00A0".repeat(depth)}
+                            {depth > 0 ? "↳ " : ""}
+                            {category.name}
+                          </option>
+                        ))}
                       </select>
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Pilih category parent jika ini adalah sub-category
@@ -1711,7 +1725,7 @@ const AdminPage: React.FC = () => {
 
                             {/* Alternative: URL Input */}
                             <input
-                              type="url"
+                              type="text"
                               value={formData.imageUrl || ""}
                               onChange={(e) =>
                                 setFormData({
@@ -1869,7 +1883,9 @@ const AdminPage: React.FC = () => {
                   </>
                 )}
 
-                <div className="flex gap-3 pt-4">
+              </div>
+
+              <div className="flex gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
                   <button
                     type="submit"
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -1886,7 +1902,6 @@ const AdminPage: React.FC = () => {
                   </button>
                 </div>
               </form>
-            </div>
           </div>
         </div>
       )}

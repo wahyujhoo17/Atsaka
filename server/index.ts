@@ -645,6 +645,44 @@ app.delete("/api/articles/:id", authenticateToken, async (req: Request, res: Res
   }
 });
 
+// ============= SITE CONTENT ENDPOINTS =============
+
+// Get editable page content (returns null data when nothing saved yet)
+app.get("/api/content/:key", async (req: Request, res: Response) => {
+  try {
+    const content = await prisma.siteContent.findUnique({
+      where: { key: req.params.key },
+    });
+
+    res.json({ key: req.params.key, data: content?.data ?? null });
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    res.status(500).json({ error: "Failed to fetch content" });
+  }
+});
+
+// Save editable page content
+app.put("/api/content/:key", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { data } = req.body;
+
+    if (!data || typeof data !== "object") {
+      return res.status(400).json({ error: "Content data is required" });
+    }
+
+    const content = await prisma.siteContent.upsert({
+      where: { key: req.params.key },
+      create: { key: req.params.key, data },
+      update: { data },
+    });
+
+    res.json(content);
+  } catch (error) {
+    console.error("Error saving content:", error);
+    res.status(500).json({ error: "Failed to save content" });
+  }
+});
+
 // Serve static files in production
 if (isProduction) {
   // Serve static files from dist folder

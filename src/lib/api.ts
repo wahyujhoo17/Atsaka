@@ -306,6 +306,32 @@ export const api = {
     return response.json();
   },
 
+  // Site Content
+  async getContent(key: string) {
+    const response = await fetch(`${API_BASE_URL}/content/${key}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch content");
+    }
+
+    return response.json();
+  },
+
+  async updateContent(key: string, data: unknown) {
+    const response = await fetch(`${API_BASE_URL}/content/${key}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ data }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to save content");
+    }
+
+    return response.json();
+  },
+
   // Image Upload
   async uploadImage(file: File) {
     const formData = new FormData();

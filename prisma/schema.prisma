@@ -15,7 +15,12 @@ model Product {
   features       String[]
   imageUrl       String?  @map("image_url")
   imageUrls      String[] @map("image_urls")
+  // Grouped specs: [{ title, items: [{ label, value, highlight? }] }]; starred rows show on cards/hero
   specifications Json?    @db.JsonB
+  // Short descriptor shown under the name on homepage cards/hero
+  subtitle       String?
+  // Detail page extras: { tagline, badges: [{ icon, label }], reasons: [{ title, description, image }] }
+  details        Json?    @db.JsonB
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -67,6 +72,15 @@ model Admin {
 
   @@index([email])
   @@map("admins")
+}
+
+// Editable page content (e.g. key "homepage"), stored as one JSON document per page
+model SiteContent {
+  key       String   @id
+  data      Json     @db.JsonB
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_content")
 }
 
 model Article {
