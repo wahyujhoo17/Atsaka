@@ -1,4 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { api } from "../lib/api";
+import {
+  defaultHomepageContent,
+  HomepageContent,
+  mergeHomepageContent,
+} from "../data/homepageContent";
 import {
   ShieldCheck,
   Target,
@@ -15,6 +21,17 @@ import {
 import { Link } from "react-router-dom";
 
 const CompanyPage: React.FC = () => {
+  const [partners, setPartners] = useState<HomepageContent["partners"]["items"]>(
+    defaultHomepageContent.partners.items,
+  );
+
+  useEffect(() => {
+    api
+      .getContent("homepage")
+      .then((result) => setPartners(mergeHomepageContent(result.data).partners.items))
+      .catch(() => undefined);
+  }, []);
+
   const handleWAClick = () => {
     const phoneNumber = "628176454312";
     const message = "Halo ATSAKA, saya ingin meminta penawaran produk.";
@@ -192,35 +209,49 @@ const CompanyPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Mitra Section */}
+      {/* Mitra Section: same partner list as the homepage (admin: Homepage → Mitra) */}
       <section
         id="customer"
-        className="py-20 bg-gray-900 text-white overflow-hidden"
+        className="py-16 md:py-20 bg-gray-900 text-white overflow-hidden"
       >
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="md:w-1/3">
-              <h2 className="text-3xl font-bold mb-4 flex items-center gap-3">
-                <Handshake className="text-red-500" /> Dipercaya Oleh
-              </h2>
-              <p className="text-gray-400">
-                Digunakan oleh instansi pemerintah, dinas pemadam kebakaran, dan
-                perusahaan perkebunan di seluruh Indonesia.
-              </p>
-            </div>
-            <div className="md:w-2/3 grid grid-cols-2 md:grid-cols-4 gap-8 opacity-60">
-              {/* Logo Placeholders */}
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="h-16 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center grayscale hover:grayscale-0 hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  <span className="text-xs font-bold tracking-widest text-white/50">
-                    PARTNER {i}
+        <div className="container mx-auto px-5 md:px-4">
+          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-500">
+              <Handshake className="w-4 h-4" /> Mitra Kami
+            </span>
+            <h2 className="mt-3 text-3xl md:text-4xl font-bold">Dipercaya Oleh</h2>
+            <p className="mt-3 text-gray-400">
+              Digunakan oleh instansi pemerintah, dinas pemadam kebakaran, dan
+              perusahaan perkebunan di seluruh Indonesia.
+            </p>
+          </div>
+
+          {/* Uniform white tiles, centred so any count (including a short last row) stays balanced */}
+          <div className="flex flex-wrap justify-center gap-3 md:gap-4 max-w-6xl mx-auto">
+            {partners.map((partner, index) => (
+              <div
+                key={`${partner.name}-${index}`}
+                className="w-[calc(50%-0.375rem)] sm:w-48 lg:w-52 h-20 px-5 flex items-center justify-center gap-2.5 rounded-2xl bg-white shadow-lg shadow-black/20 ring-1 ring-white/10 hover:-translate-y-0.5 hover:shadow-xl transition-all"
+              >
+                {partner.logo && (
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className={`object-contain ${partner.showName ? "h-9 w-9 shrink-0" : "max-h-9 max-w-[80%]"}`}
+                    loading="lazy"
+                  />
+                )}
+                {(!partner.logo || partner.showName) && (
+                  <span
+                    className={`text-[11px] md:text-xs font-bold uppercase tracking-tight text-gray-800 leading-tight line-clamp-3 ${
+                      partner.logo ? "text-left" : "text-center"
+                    }`}
+                  >
+                    {partner.name}
                   </span>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
