@@ -25,8 +25,12 @@ const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 const isProduction = process.env.NODE_ENV === "production";
 
+// Uploaded images live outside the project folder in production (UPLOAD_DIR), so deploys
+// that replace or clean the project don't wipe them. Defaults to public/uploads for local dev.
+const uploadsDir = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(__dirname, "../public/uploads");
 // Create uploads directory if not exists
-const uploadsDir = path.join(__dirname, "../public/uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -59,7 +63,7 @@ app.use(
 app.use(express.json());
 
 // Serve uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
 // Request logging
 app.use((req, res, next) => {
@@ -280,7 +284,8 @@ app.delete(
   authenticateToken,
   async (req: Request, res: Response) => {
     try {
-      const { filename } = req.params;
+      // basename() keeps "../" tricks from reaching files outside the uploads folder
+      const filename = path.basename(String(req.params.filename));
       const filepath = path.join(uploadsDir, filename);
 
       if (fs.existsSync(filepath)) {
