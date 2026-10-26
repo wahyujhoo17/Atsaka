@@ -65,21 +65,33 @@ const CompanyPage: React.FC = () => {
             </div>
             <div className="space-y-8">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                  ATasi BerSAka Kami
+                <h2 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-gray-900 dark:text-white">
+                  <span className="text-red-600">At</span>asi Ber
+                  <span className="text-red-600">sa</span>ma{" "}
+                  <span className="text-red-600">Ka</span>mi
                 </h2>
-                <div className="w-12 h-1 bg-red-600 mb-6"></div>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
-                  ATSAKA merupakan merek lokal yang bergerak di bidang alat
-                  pemadam kebakaran hutan yang dinaungi oleh{" "}
-                  <span className="font-bold">Atsaka</span>.
-                  ATSAKA memiliki berbagai produk macam-macam pompa lokal yang
-                  berkualitas dan alat-alat pendukung di bidang pemadam
-                  kebakaran hutan.
+                <p className="mt-3 text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-200">
+                  Membangun Solusi Pemadam Kebakaran Hutan Buatan Indonesia
                 </p>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg mt-4 font-medium italic">
-                  ATSAKA berkomitmen dalam membantu pencegahan hingga
-                  pengendalian dalam bencana kebakaran hutan.
+                <div className="w-12 h-1 bg-red-600 my-6"></div>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                  Setiap detik sangat berarti ketika kebakaran terjadi. Di medan
+                  yang sulit dijangkau, peralatan harus mampu bekerja cepat,
+                  andal, dan konsisten. Berangkat dari kebutuhan tersebut, ATSAKA
+                  hadir sebagai brand lokal yang mengembangkan pompa pemadam
+                  kebakaran hutan dan perlengkapan pendukung yang dirancang
+                  khusus untuk kondisi lapangan yang berbeda-beda.
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg mt-4">
+                  Kami percaya bahwa kualitas tidak hanya diukur dari performa
+                  produk, tetapi juga dari kepercayaan yang diberikan oleh setiap
+                  pengguna. Karena itu, setiap solusi yang kami hadirkan
+                  dikembangkan dengan fokus pada keandalan, kemudahan
+                  penggunaan, dan kesiapan untuk mendukung berbagai misi
+                  pemadaman.
+                </p>
+                <p className="mt-6 text-sm font-bold uppercase tracking-[0.3em] text-red-600">
+                  Kuat. Kuasa. Merdeka.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4">

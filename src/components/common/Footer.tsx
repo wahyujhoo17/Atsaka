@@ -66,7 +66,7 @@ const Footer: React.FC = () => {
               {[
                 { name: "Beranda", path: "/" },
                 { name: "Produk", path: "/products" },
-                { name: "About Us", path: "/company" },
+                { name: "Tentang Kami", path: "/company" },
                 { name: "Artikel", path: "/articles" },
                 { name: "Kontak", path: "/contact" },
               ].map((link) => (

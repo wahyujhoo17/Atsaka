@@ -1,18 +1,48 @@
 import React, { useState, useEffect } from "react";
-import { X, MessageCircle, Flame } from "lucide-react";
+import { X } from "lucide-react";
 
 const WA_NUMBER = "628176454312";
+
+// "Jangan tampilkan lagi" / sending the form hides the popup for 30 days;
+// closing with X only hides it for the current browser session.
+const HIDE_UNTIL_KEY = "atsaka_popup_hidden_until";
+const SESSION_KEY = "atsaka_popup_closed";
+const HIDE_DAYS = 30;
+
+const isHidden = () => {
+  try {
+    if (sessionStorage.getItem(SESSION_KEY)) return true;
+    return Number(localStorage.getItem(HIDE_UNTIL_KEY) || 0) > Date.now();
+  } catch {
+    return false;
+  }
+};
+
+const rememberClosed = (forDays?: number) => {
+  try {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    if (forDays) localStorage.setItem(HIDE_UNTIL_KEY, String(Date.now() + forDays * 24 * 60 * 60 * 1000));
+  } catch {
+    // Storage blocked (private mode): the popup simply shows again next visit
+  }
+};
 
 const PopupBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [waNumber, setWaNumber] = useState("");
 
   useEffect(() => {
+    if (isHidden()) return;
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const close = (forDays?: number) => {
+    rememberClosed(forDays);
+    setIsVisible(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +51,7 @@ const PopupBanner: React.FC = () => {
       `Halo ATSAKA, saya tertarik mendapatkan penawaran peralatan pemadam kebakaran. No WA saya: ${waNumber}`,
     );
     window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, "_blank");
-    setIsVisible(false);
+    close(HIDE_DAYS);
   };
 
   if (!isVisible) return null;
@@ -43,7 +73,7 @@ const PopupBanner: React.FC = () => {
         <div className="relative z-10 p-10 md:p-12 flex flex-col items-center text-center">
           {/* Close Button */}
           <button
-            onClick={() => setIsVisible(false)}
+            onClick={() => close()}
             className="absolute top-4 right-4 bg-white hover:bg-gray-200 text-black rounded-full p-1 transition-colors z-20"
             aria-label="Tutup popup"
           >
@@ -99,6 +129,14 @@ const PopupBanner: React.FC = () => {
             Kami akan segera menghubungi Anda melalui WhatsApp untuk konsultasi
             lebih lanjut.
           </p>
+
+          <button
+            type="button"
+            onClick={() => close(HIDE_DAYS)}
+            className="mt-4 text-[11px] text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors"
+          >
+            Jangan tampilkan lagi
+          </button>
         </div>
       </div>
     </div>

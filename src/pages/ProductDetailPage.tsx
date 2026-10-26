@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, MessageCircle, Package } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, MessageCircle, Package } from "lucide-react";
 import Button from "../components/common/Button";
 import ApplicationSection from "../components/home/ApplicationSection";
 import ProductCard from "../components/products/ProductCard";
@@ -8,7 +8,7 @@ import CallToAction from "../components/home/CallToAction";
 import { api } from "../lib/api";
 import { Category, Product } from "../types";
 import { cleanSpecGroups, highlightedSpecs, toSpecGroups } from "../lib/specGroups";
-import { firstSentence, getFeatureIcon, toProductDetails } from "../lib/productDetails";
+import { firstSentence, toProductDetails } from "../lib/productDetails";
 import { getContentIcon, getSpecIcon } from "../lib/contentIcons";
 import { HomepageContent, mergeHomepageContent, whatsappLink } from "../data/homepageContent";
 
@@ -325,7 +325,7 @@ const ProductDetailPage: React.FC = () => {
       </section>
 
       {/* ---------- Why this product: intro on the left, reason cards fill the rest of the width ---------- */}
-      {(reasons.length > 0 || product.description) && (
+      {(reasons.length > 0 || product.description || features.length > 0) && (
         <section className="py-12 md:py-16">
           <div className="container mx-auto px-5 md:px-4">
             <div className={`grid grid-cols-1 gap-8 lg:gap-12 ${reasons.length > 0 ? "lg:grid-cols-12" : ""}`}>
@@ -339,6 +339,18 @@ const ProductDetailPage: React.FC = () => {
                   <p className="mt-5 text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
                     {product.description.replace(/\s*\n\s*/g, " ")}
                   </p>
+                )}
+                {features.length > 0 && (
+                  <ul className={`mt-6 grid gap-3 ${reasons.length > 0 ? "" : "sm:grid-cols-2"}`}>
+                    {features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-3 text-sm md:text-[15px] text-gray-800 dark:text-gray-200 leading-snug">
+                        <span className="mt-0.5 w-5 h-5 shrink-0 rounded-full bg-red-600 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        </span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
               {reasons.length > 0 && (
@@ -360,26 +372,6 @@ const ProductDetailPage: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ---------- Key features ---------- */}
-      {features.length > 0 && (
-        <section className="py-10 md:py-12 bg-gray-50 dark:bg-gray-900/50">
-          <div className="container mx-auto px-5 md:px-4">
-            <SectionTitle>Fitur Utama</SectionTitle>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-flow-col lg:auto-cols-fr gap-y-6">
-              {features.map((feature, index) => {
-                const Icon = getFeatureIcon(feature);
-                return (
-                  <div key={index} className="flex flex-col items-center text-center px-3 lg:border-l first:border-l-0 border-gray-200 dark:border-gray-800">
-                    <Icon className="w-7 h-7 md:w-8 md:h-8 text-red-600 mb-3" strokeWidth={1.5} />
-                    <p className="text-xs md:text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug">{feature}</p>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </section>

@@ -34,7 +34,7 @@ const Navbar: React.FC = () => {
       ]
     },
     { name: "Kelengkapan Pemadam", path: "/products?category=aksesoris" },
-    { name: "About Us", path: "/company" },
+    { name: "Tentang Kami", path: "/company" },
   ];
 
   // Navbar always sits on a dark bar (DJI-style reference), so links are light
