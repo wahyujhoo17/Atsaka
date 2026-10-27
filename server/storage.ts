@@ -30,8 +30,9 @@ const s3 = useObjectStorage
     })
   : null;
 
-// Public base for object URLs, e.g. https://media.example.com/atsaka-media
-const publicBase = (S3_PUBLIC_URL || `${S3_ENDPOINT}/${S3_BUCKET}`).replace(/\/+$/, "");
+// Base for stored image URLs. Defaults to "/media": images are served by this app (bucket stays private).
+// Set S3_PUBLIC_URL to a full URL only if the bucket itself is publicly readable.
+const publicBase = (S3_PUBLIC_URL || "/media").replace(/\/+$/, "");
 
 export const localUploadsDir = (serverDir: string) =>
   process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : path.join(serverDir, "../public/uploads");
