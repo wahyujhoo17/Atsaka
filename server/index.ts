@@ -11,6 +11,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { deleteImage, getImage, localUploadsDir, saveImage, storageDescription } from "./storage";
 
 dotenv.config();
 
@@ -27,9 +28,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Uploaded images live outside the project folder in production (UPLOAD_DIR), so deploys
 // that replace or clean the project don't wipe them. Defaults to public/uploads for local dev.
-const uploadsDir = process.env.UPLOAD_DIR
-  ? path.resolve(process.env.UPLOAD_DIR)
-  : path.join(__dirname, "../public/uploads");
+const uploadsDir = localUploadsDir(__dirname);
 // Create uploads directory if not exists
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -64,6 +63,28 @@ app.use(express.json());
 
 // Serve uploaded files
 app.use("/uploads", express.static(uploadsDir));
+
+// Serve MinIO images under this site's own domain (/media/uploads/<file>), hiding the MinIO host
+app.get("/media/*key", async (req: Request, res: Response) => {
+  const segments = (req.params as { key?: string | string[] }).key;
+  const key = Array.isArray(segments) ? segments.join("/") : String(segments || "");
+  if (!key.startsWith("uploads/") || key.split("/").includes("..")) {
+    return res.status(404).end();
+  }
+  try {
+    const image = await getImage(key);
+    if (!image) return res.status(404).end();
+    if (image.contentType) res.type(image.contentType);
+    if (image.contentLength) res.setHeader("Content-Length", image.contentLength);
+    if (image.etag) res.setHeader("ETag", image.etag);
+    // File names are unique per upload, so browsers and CDNs may cache them for a year
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    image.body.on("error", () => res.destroy()).pipe(res);
+  } catch (error) {
+    console.error("Error serving image:", error);
+    res.status(502).end();
+  }
+});
 
 // Request logging
 app.use((req, res, next) => {
@@ -235,7 +256,6 @@ app.post(
       }
 
       const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
-      const filepath = path.join(uploadsDir, filename);
 
       // Compress image to max 200KB using sharp
       let quality = 80;
@@ -258,10 +278,8 @@ app.post(
         quality -= 10;
       } while (quality > 20);
 
-      // Save compressed image
-      await fs.promises.writeFile(filepath, compressed);
-
-      const imageUrl = `/uploads/${filename}`;
+      // Save compressed image (MinIO when configured, otherwise the local uploads folder)
+      const imageUrl = await saveImage(compressed, filename, "image/webp", uploadsDir);
       const fileSize = Math.round(compressed.length / 1024); // KB
 
       res.json({
@@ -286,10 +304,8 @@ app.delete(
     try {
       // basename() keeps "../" tricks from reaching files outside the uploads folder
       const filename = path.basename(String(req.params.filename));
-      const filepath = path.join(uploadsDir, filename);
 
-      if (fs.existsSync(filepath)) {
-        await fs.promises.unlink(filepath);
+      if (await deleteImage(filename, uploadsDir)) {
         res.json({ message: "Image deleted successfully" });
       } else {
         res.status(404).json({ error: "Image not found" });
@@ -708,6 +724,7 @@ if (isProduction) {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📦 Mode: ${isProduction ? "PRODUCTION" : "DEVELOPMENT"}`);
+  console.log(`🖼️  Image storage: ${storageDescription()}`);
   if (isProduction) {
     console.log(`🌐 Serving static files from dist/`);
   }

@@ -33,3 +33,6 @@ public/uploads/
 .env.*
 !.env.example
 
+
+# Backups written by scripts/migrate-images-to-minio.ts
+images-migration-backup-*.json
