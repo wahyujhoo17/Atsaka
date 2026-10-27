@@ -419,11 +419,8 @@ const AdminPage: React.FC = () => {
       setUploadingImage(true);
       const result = await api.uploadImage(file);
 
-      // Get full URL based on environment
-      const baseUrl =
-        import.meta.env.VITE_API_URL?.replace("/api", "") ||
-        "http://localhost:5001";
-      const fullUrl = `${baseUrl}${result.url}`;
+      // Store the server's relative path (/uploads/...) so it works on any domain
+      const fullUrl = result.url;
 
       setFormData({ ...formData, imageUrl: fullUrl });
       toast.success(`Gambar berhasil diupload (${result.size}KB)`, {
@@ -456,11 +453,8 @@ const AdminPage: React.FC = () => {
       setUploadingMultiple(true);
       const result = await api.uploadImage(file);
 
-      // Get full URL based on environment
-      const baseUrl =
-        import.meta.env.VITE_API_URL?.replace("/api", "") ||
-        "http://localhost:5001";
-      const fullUrl = `${baseUrl}${result.url}`;
+      // Store the server's relative path (/uploads/...) so it works on any domain
+      const fullUrl = result.url;
 
       setFormData({
         ...formData,
